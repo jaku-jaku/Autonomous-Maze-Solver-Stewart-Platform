@@ -1,0 +1,5 @@
+*.temp/*
+# Exclude folder:
+Firmware/Nucleo_pwm/mbed/.bld/
+Firmware/Nucleo_pwm/BUILD/
+Firmware/Nucleo_pwm/.temp/
