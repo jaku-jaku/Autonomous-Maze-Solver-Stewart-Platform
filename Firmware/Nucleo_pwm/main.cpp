@@ -6,8 +6,10 @@
 #include "Stewart/MotionProfile.h"
 
 #define EN_CALIBRATION_MODE 0
+#define EN_TEST_MODE        1
 
-#if (EN_CALIBRATION_MODE)
+#if (EN_TEST_MODE)
+
 // STEP 1: need calibrate individual servo with this one
 const Servo::calib_params_t calib1 = {
     .max = {30  , 2000},
@@ -15,13 +17,28 @@ const Servo::calib_params_t calib1 = {
     .min = {-30 , 1000},
 };
 Servo servo2calib(D9, &calib1);
+
+#if (EN_CALIBRATION_MODE)
 int main() {
     while(1) {
-        // try 0 degree and calibrate
+        // Tune .def value & try goToDefault and cycle through to calibrate
+        goToDefault();
         // try 30 degree and calibrate, change calib1
-        servo2calib = 0;
+        // servo2calib = 30;
     }
 }
+#else
+int main() {
+    while(1) {
+        // step through every single position
+        for(int i = calib1.min; i<calib1.max; i++)
+        {
+            servo2calib = i;
+            wait(0.01); // 10ms delay
+        }
+    }
+}
+#endif //EN_CALIBRATION_MODE
 
 #else
 // STEP 1.5: copy calibrated values below
@@ -78,4 +95,4 @@ int main() {
         }
     }
 }
-#endif //(EN_CALIBRATION_MODE)
+#endif //(EN_TEST_MODE)

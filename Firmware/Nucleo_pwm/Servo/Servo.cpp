@@ -28,6 +28,10 @@ void Servo::setPosition(const degree_t angle) {
     _current = temp;
 }
 
+void Servo::goToDefault(void){
+    _pwm.pulsewidth_us(_calibration->def.pwm);
+}
+
 Servo::pwm_ang_pair_t Servo::getStatus(void){
     return _current;
 }
