@@ -47,6 +47,7 @@ PROJECT := Nucleo_pwm
 # Objects and Paths
 
 OBJECTS += Servo/Servo.o
+OBJECTS += Stewart/Stewart.o
 OBJECTS += main.o
 
  SYS_OBJECTS += mbed/TARGET_NUCLEO_F401RE/TOOLCHAIN_GCC_ARM/PeripheralPins.o
