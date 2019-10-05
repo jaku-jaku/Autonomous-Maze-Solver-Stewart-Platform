@@ -27,6 +27,9 @@ public:
     // set position shall be within -90 to 90
     void setPosition(const degree_t angle); 
 
+    // go to default position
+    void goToDefault(void);
+
     /**  Shorthand for the write and read functions */
     Servo& operator= (const degree_t angle);
     pwm_ang_pair_t getStatus(void);

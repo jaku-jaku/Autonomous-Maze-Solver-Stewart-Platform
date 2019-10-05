@@ -31,7 +31,7 @@ int main() {
 int main() {
     while(1) {
         // step through every single position
-        for(int i = calib1.min; i<calib1.max; i++)
+        for(int i = calib1.min.ang; i < calib1.max.ang; i++)
         {
             servo2calib = i;
             wait(0.01); // 10ms delay
