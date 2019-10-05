@@ -1,4 +1,5 @@
 from kinematics import Kinematics, getInitialPlatformHeight
+import utils
 
 trans = [0, 0, 0]
 rot = [10, 0, 0]
