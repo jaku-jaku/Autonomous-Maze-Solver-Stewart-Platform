@@ -6,24 +6,55 @@ from pyquaternion import Quaternion
 #  input: [surge, sway, heave],[roll, pitch, yaw]
 #  output: motor angle alpha
 
-# Global var for generic length and position in mm -> need to modify anchor array
-leg_len = 150
-horn_len = 30
-initial_base_anchor_pos = np.array([10, 10, 10])
-initial_platform_anchor_pos = np.array([10, 10, 0])
+# Global var for generic length and position in mm
+leg_len = 182
+horn_len = 24
+initial_base_anchor_pos = np.array([93.07, 53.95, 0])
+initial_platform_anchor_pos = np.array([54.26, 78.95, 177.676])
 
 def getInitialPlatformHeight():
-    return (
-        math.sqrt(
-            leg_len**2 + horn_len**2 
-            - (initial_platform_anchor_pos[0] - initial_base_anchor_pos[0])**2 
-            - (initial_platform_anchor_pos[1] - initial_base_anchor_pos[1])**2
-        )
-    )
+    return 177.676
+    # return (
+    #     math.sqrt(
+    #         leg_len**2 + horn_len**2 
+    #         - (initial_platform_anchor_pos[0] - initial_base_anchor_pos[0])**2 
+    #         - (initial_platform_anchor_pos[1] - initial_base_anchor_pos[1])**2
+    #     )
+    # )
 
 # Global var for reference frame and length in mm -> need to modify
 base_pos = np.array([0, 0, 0])
 platform_pos = np.array([0, 0, getInitialPlatformHeight()])
+
+def cart2pol(x, y):
+    rho = np.sqrt(x**2 + y**2)
+    phi = np.arctan2(y, x)
+    return(rho, phi)
+
+def pol2cart(rho, phi):
+    x = rho * np.cos(phi)
+    y = rho * np.sin(phi)
+    return(x, y)
+
+def cyl2cart_3D(r, phi, h):
+    x, y = pol2cart(r, phi)
+    return [x, y, h]
+
+def sph2cart_3D(sph_coords): #r, phi, theta
+    r, phi, theta = sph_coords
+    x = r * np.sin(theta) * np.cos(phi)
+    y = r * np.sin(theta) * np.sin(phi)
+    z = r * np.cos(theta)
+    return [x, y, z]
+
+def cart2sph_3D(cart_coords):
+    x,y,z = cart_coords
+    print(x,y,z)
+    XsqPlusYsq = x**2 + y**2
+    r = math.sqrt(XsqPlusYsq + z**2)               # r
+    theta = math.atan2(z,math.sqrt(XsqPlusYsq))     # theta
+    phi = math.atan2(y,x)                           # phi
+    return [r, phi, theta]
 
 class Kinematics:
     def __init__(self):
@@ -52,7 +83,7 @@ class Kinematics:
     """
     def inverse_kinematics(self, trans, rot, base_anchor, platform_anchor, beta_k):
         local_trans = np.array(copy.copy(trans))
-        local_rot = np.array(copy.copy(rot))
+        local_rot = np.radians(np.array(copy.copy(rot)))
         Bk = np.array(base_anchor)
         Pk = np.array(platform_anchor)
         
@@ -67,9 +98,9 @@ class Kinematics:
 
         ek = 2 * horn_len * Lk[2]
         fk = 2 * horn_len * ((math.cos(beta_k) * Lk[0]) + (math.sin(beta_k) * Lk[1]))
-        gk = Lk_len**2 - (leg_len**2 - horn_len**2)
+        gk = (Lk_len)**2 - ((leg_len)**2 - (horn_len)**2)
 
-        alpha_k_rad = math.asin(gk/math.sqrt(ek**2 + fk**2)) - math.atan2(fk/ek)
-        # alpha_k_deg = math.degrees(alpha_k_rad)
+        alpha_k_rad = math.asin(gk/math.sqrt((ek)**2 + (fk)**2)) - math.atan2(fk, ek)
+        alpha_k_deg = math.degrees(alpha_k_rad)
 
-        return alpha_k_rad
+        return alpha_k_deg
