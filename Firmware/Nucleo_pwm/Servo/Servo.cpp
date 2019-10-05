@@ -21,7 +21,7 @@ void Servo::setPosition(const degree_t angle) {
     {
         temp.ang = angle; // do nothing
     }
-    temp.pwm = temp.ang*_range.pwm/_range.ang;
+    temp.pwm = (temp.ang - _calibration->min.ang)*_range.pwm/_range.ang + _calibration->min.pwm;
     _pwm.pulsewidth_us(temp.pwm);
 
     // Need a mutex if multi tasking
