@@ -36,12 +36,12 @@ def getAllBaseAnchor():
     angles = np.radians(c.BASE_ANCHOR_ANGLE)
     res = []
     for angle in angles:
-        res.append(pol2cart(c.BASE_ANCHOR_RADIUS, angle))
+        res.append(cyl2cart_3D(c.BASE_ANCHOR_RADIUS, angle, 0))
     return np.array(res)
 
 def getAllPlatformAnchor():
     angles = np.radians(c.PLATFORM_ANCHOR_ANGLE)
     res =[]
     for angle in angles:
-        res.append(pol2cart(c.PLATFORM_ANCHOR_RADIUS, angle))
+        res.append(cyl2cart_3D(c.PLATFORM_ANCHOR_RADIUS, angle, 0))
     return np.array(res)
