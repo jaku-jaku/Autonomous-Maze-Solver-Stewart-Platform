@@ -1,0 +1,16 @@
+# +5 deg about x - SOUTH
+# [16, 1, 1, -1, -16, -16]
+# -5 deg about x - NORTH
+# [-16, -17, -1, 1, 17, 16]
+# +5 deg about y - EAST
+# [-10, -8, 20, 18, -8, -11]
+# -5 deg about y - WEST
+# [11, 7, -20, -18, 7, 11]
+# +5 deg about x-y-q1 - SOUTH-EAST
+# [4, 9, 22, 17, -26, -28]
+# -5 deg about x-y-q1 - NORTH-WEST
+# [-5, -8, -21, -17, 25, 28]
+# +5 deg about x-y-q2 - SOUTH-WEST
+# [29, 25, -18, -20, -8, -5]
+# -5 deg about x-y-q2 - NORTH-EAST
+# [-27, -26, 18, 20, 9, 4]
