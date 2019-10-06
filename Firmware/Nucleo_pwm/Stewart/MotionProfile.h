@@ -20,14 +20,14 @@ namespace COMPASS_MOTION{
     // STEP 2: Enter these based on the offline computation 
     Servo::degree_t angles[TOTAL_NUM_DIRECTIONS][MAX_NUM_ACTUATORS] = {
         {0,0,0,0,0,0},// NULL
-        {0,0,0,0,0,0},// N
-        {0,0,0,0,0,0},// E
-        {0,0,0,0,0,0},// W
-        {0,0,0,0,0,0},// S
-        {0,0,0,0,0,0},// NE
-        {0,0,0,0,0,0},// NW
-        {0,0,0,0,0,0},// SE
-        {0,0,0,0,0,0},// SW
+        {16, -17, 1, 1, -17, 16},// N
+        {10, -8, -20, 18, 8, -11},// E
+        {-11, 7, 20, -18, -7, 11},// W
+        {-16, 1, -1, -1, 16, -16},// S
+        {27, -26, -18, 20, -9, 4},// NE
+        {5, -8, 21, -17, -25, 28},// NW
+        {-4, 9, -22, 17, 26, -28},// SE
+        {-29, 25, 18, -20, 8, -5},// SW
     };
     
     void driveTo(direction_E dir, Stewart &platform)
