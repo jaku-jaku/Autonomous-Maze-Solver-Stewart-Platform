@@ -18,11 +18,13 @@
 
 1. Install GCC ARM with homebrew: https://github.com/osx-cross/homebrew-arm
 
+OR 
+
+
 2. and we can build locally:
 ```bash
    $ cd Proj__StewartPlatform/Firmware/Nucleo_main
    $ make
 ```
-
 3. Remember to manually update Makefile for new libs.
 
