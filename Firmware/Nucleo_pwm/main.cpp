@@ -10,7 +10,6 @@
 
 
 #if (EN_TEST_MODE)
-Serial pc(SERIAL_TX, SERIAL_RX);
 // STEP 1: need calibrate individual servo with this one
 const Servo::calib_params_t calib1 = {
     .max = {60  , 2200},
@@ -30,15 +29,15 @@ int main() {
 }
 #else
 int main() {
-    PwmOut _pwm(D9); 
+    PwmOut _pwm(D9);
     while(1) {
-        
-        
+
+
         _pwm.pulsewidth_us(1400);
         wait(10);
         _pwm.pulsewidth_us(1850);
         wait(10);
-        
+
 //        for(int i = 0; i > calib1.min.ang; i--)
 //        {
 //            servo2calib = i;
@@ -117,30 +116,32 @@ Stewart m_platform(m_servos);
 //////// MAIN ////////////
 int main() {
     COMPASS_MOTION::driveTo(COMPASS_MOTION:: DIRECTION_NULL, m_platform);
+    Serial pc(SERIAL_TX, SERIAL_RX);
     wait(5);
     while(1) {
       //  COMPASS_MOTION::driveTo(COMPASS_MOTION:: DIRECTION_NULL, m_platform);
-       // wait(0.01);
-        char direction = pc.getc();
-        compass_motion::driveto(compass_motion::direction_n, m_platform);
-        wait(0.01);
-        pc.putc(pc.getc());
-//        COMPASS_MOTION::driveTo(COMPASS_MOTION::DIRECTION_N, m_platform);
-//        wait(10);
-//        COMPASS_MOTION::driveTo(COMPASS_MOTION::DIRECTION_E, m_platform);
-//        wait(10);
-//        COMPASS_MOTION::driveTo(COMPASS_MOTION::DIRECTION_W, m_platform);
-//        wait(10);
-//        COMPASS_MOTION::driveTo(COMPASS_MOTION::DIRECTION_S, m_platform);
-//        wait(10);
-//        COMPASS_MOTION::driveTo(COMPASS_MOTION::DIRECTION_NE, m_platform);
-//        wait(10);
-//        COMPASS_MOTION::driveTo(COMPASS_MOTION::DIRECTION_NW, m_platform);
-//        wait(10);
-//        COMPASS_MOTION::driveTo(COMPASS_MOTION::DIRECTION_SE, m_platform);
-//        wait(10);
-//        COMPASS_MOTION::driveTo(COMPASS_MOTION::DIRECTION_SW, m_platform);
-//        wait(10);
+      // wait(0.01);
+      char direction = pc.getc();
+      int direction_num = direction - 48;
+      COMPASS_MOTION::driveTo(direction_num, m_platform);
+      wait(0.01);
+      pc.putc(direction);
+      // COMPASS_MOTION::driveTo(COMPASS_MOTION::DIRECTION_N, m_platform);
+      // wait(10);
+      // COMPASS_MOTION::driveTo(COMPASS_MOTION::DIRECTION_E, m_platform);
+      // wait(10);
+      // COMPASS_MOTION::driveTo(COMPASS_MOTION::DIRECTION_W, m_platform);
+      // wait(10);
+      // COMPASS_MOTION::driveTo(COMPASS_MOTION::DIRECTION_S, m_platform);
+      // wait(10);
+      // COMPASS_MOTION::driveTo(COMPASS_MOTION::DIRECTION_NE, m_platform);
+      // wait(10);
+      // COMPASS_MOTION::driveTo(COMPASS_MOTION::DIRECTION_NW, m_platform);
+      // wait(10);
+      // COMPASS_MOTION::driveTo(COMPASS_MOTION::DIRECTION_SE, m_platform);
+      // wait(10);
+      // COMPASS_MOTION::driveTo(COMPASS_MOTION::DIRECTION_SW, m_platform);
+      // wait(10);
     }
 }
 #endif //(EN_TEST_MODE)

@@ -17,7 +17,7 @@ namespace COMPASS_MOTION{
         TOTAL_NUM_DIRECTIONS
     } direction_E;
 
-    // STEP 2: Enter these based on the offline computation 
+    // STEP 2: Enter these based on the offline computation
     Servo::degree_t angles[TOTAL_NUM_DIRECTIONS][MAX_NUM_ACTUATORS] = {
         {0,0,0,0,0,0},// NULL
         {16, -17, 1, 1, -17, 16},// N
@@ -29,8 +29,8 @@ namespace COMPASS_MOTION{
         {-4, 9, -22, 17, 26, -28},// SE
         {-29, 25, 18, -20, 8, -5},// SW
     };
-    
-    void driveTo(direction_E dir, Stewart &platform)
+
+    void driveTo(int dir, Stewart &platform)
     {
         if (dir < TOTAL_NUM_DIRECTIONS)
         {
@@ -41,7 +41,7 @@ namespace COMPASS_MOTION{
         }
         else
         {
-            // sth. that calls this function is wrong 
+            // sth. that calls this function is wrong
         }
     }
 }
