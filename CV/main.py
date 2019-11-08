@@ -16,7 +16,7 @@ def concat_tile(im_list_2d, scale):
     return cv2.vconcat(im_list_v)
 
 def detectMaze(frame, hsvl_param, hsv_param, scale = 0.1, ifdetectBall=False):
-    frame_hsv = cv2.cvtColor(frame,cv2.COLOR_RGB2HSV)
+    frame_hsv = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
     frame_hsv_gauss = cv2.GaussianBlur(frame_hsv,(5,5),cv2.BORDER_DEFAULT)
     frame_gray = cv2.cvtColor(frame_hsv_gauss,cv2.COLOR_RGB2GRAY)
     # define range of blue color in HSV
@@ -24,14 +24,18 @@ def detectMaze(frame, hsvl_param, hsv_param, scale = 0.1, ifdetectBall=False):
     upper_blue = np.array(hsv_param)
     mask = cv2.inRange(frame_hsv_gauss, lower_blue, upper_blue)
     res = cv2.bitwise_and(frame, frame, mask= mask)
-    # cv2.imshow('hsv', imageScale(frame_hsv,scale))
     if(ifdetectBall):
         detectBall(frame_hsv_gauss, frame_gray)
-    cv2.imshow('calibrate_window', concat_tile([[imageScale(frame,scale), cv2.cvtColor(imageScale(frame_gray,scale),cv2.COLOR_GRAY2RGB)]
-    , [cv2.cvtColor(imageScale(mask,scale),cv2.COLOR_GRAY2RGB), imageScale(res,scale)]]))
+    
+    cv2.imshow('calibrate_window', concat_tile(
+        [
+        [frame, cv2.cvtColor(frame_gray,cv2.COLOR_GRAY2RGB)], 
+        [res,   cv2.cvtColor(mask,cv2.COLOR_GRAY2RGB)],
+        ], scale))
 
 def detectMazeV2(frame, scale = 0.1):
     frame_cpy = copy.deepcopy(frame)
+    frame_b,frame_g,frame_r = cv2.split(frame_cpy)
     frame_hsv = cv2.cvtColor(frame,cv2.COLOR_RGB2HSV)
     # Gray image op
     frame_gray = cv2.cvtColor(frame,cv2.COLOR_RGB2GRAY)
@@ -62,35 +66,12 @@ def detectMazeV2(frame, scale = 0.1):
     # apply final mask & see result
     res = cv2.bitwise_and(frame, frame, mask= region_mask_new)
 
-    # Line detection
-    # merged_mask_new_cpy = cv2.cvtColor(merged_mask_new,cv2.COLOR_GRAY2RGB)
-    # edges = cv2.Canny(merged_mask_new,50,150,apertureSize = 3)
-    # minLineLength = 100
-    # maxLineGap = 10
-    # lines = cv2.HoughLines(edges,1,np.pi/180,100,minLineLength,maxLineGap)
-    # for x1,y1,x2,y2 in lines[0]:
-    #     cv2.line(merged_mask_new_cpy,(x1,y1),(x2,y2),(0,255,0),2)
-    #     cv2.line(frame_cpy,(x1,y1),(x2,y2),(0,255,0),2)
-    # for line in lines:
-    #     for rho,theta in line:
-    #         a = np.cos(theta)
-    #         b = np.sin(theta)
-    #         x0 = a*rho
-    #         y0 = b*rho
-    #         x1 = int(x0 + 1000*(-b))
-    #         y1 = int(y0 + 1000*(a))
-    #         x2 = int(x0 - 1000*(-b))
-    #         y2 = int(y0 - 1000*(a))
-    #     cv2.line(merged_mask_new_cpy,(x1,y1),(x2,y2),(0,0,255),5)
-    #     cv2.line(frame_cpy,(x1,y1),(x2,y2),(0,0,255),5)
-
     cv2.imshow('calibrate_window', concat_tile(
         [
-        [frame,                                     cv2.cvtColor(frame_gray,cv2.COLOR_GRAY2RGB)], 
-        [cv2.cvtColor(thresh,cv2.COLOR_GRAY2RGB),   cv2.cvtColor(dilation,cv2.COLOR_GRAY2RGB)],
-        [frame,                                     cv2.cvtColor(erosion,cv2.COLOR_GRAY2RGB)],
-        [res,                                       cv2.cvtColor(merged_mask_new,cv2.COLOR_GRAY2RGB)],
-        # [frame_cpy,                                 merged_mask_new_cpy],
+        [frame,                                     cv2.cvtColor(frame_gray,cv2.COLOR_GRAY2RGB), cv2.cvtColor(thresh,cv2.COLOR_GRAY2RGB)],
+        [cv2.cvtColor(dilation,cv2.COLOR_GRAY2RGB) ,                                      frame, cv2.cvtColor(erosion,cv2.COLOR_GRAY2RGB)],
+        [res,                                                                          res, cv2.cvtColor(merged_mask_new,cv2.COLOR_GRAY2RGB)],
+        [cv2.cvtColor(frame_b,cv2.COLOR_GRAY2RGB),cv2.cvtColor(frame_g,cv2.COLOR_GRAY2RGB),cv2.cvtColor(frame_r,cv2.COLOR_GRAY2RGB)],
         ], scale))
 
 
@@ -127,31 +108,23 @@ def grab_webCam_feed(cam, mirror=False):
 def nothing(x):
     pass
 
-def showUtilities():
+def showUtilities(properties):
     # Create a black image, a window
     img = np.zeros((300,512,3), np.uint8)
     cv2.namedWindow('calibrate_window')
-
     # create trackbars for color change
-    cv2.createTrackbar('Hl','calibrate_window',0,255,nothing)
-    cv2.createTrackbar('Sl','calibrate_window',0,255,nothing)
-    cv2.createTrackbar('Vl','calibrate_window',0,255,nothing)
-    cv2.createTrackbar('H','calibrate_window',0,255,nothing)
-    cv2.createTrackbar('S','calibrate_window',0,255,nothing)
-    cv2.createTrackbar('V','calibrate_window',0,255,nothing)
+    for prop in properties:
+        cv2.createTrackbar(prop,'calibrate_window',0,255,nothing)
 
-def doHSVCalibration(test_frame):
-    Hl_val = cv2.getTrackbarPos('Hl','calibrate_window')
-    Sl_val = cv2.getTrackbarPos('Sl','calibrate_window')
-    Vl_val = cv2.getTrackbarPos('Vl','calibrate_window')
-    H_val = cv2.getTrackbarPos('H','calibrate_window')
-    S_val = cv2.getTrackbarPos('S','calibrate_window')
-    V_val = cv2.getTrackbarPos('V','calibrate_window')
-    detectMaze(test_frame, [Hl_val,Sl_val,Vl_val], [H_val,S_val,V_val], ifdetectBall=False)
+def obtainSlides(properties):
+    vals = []
+    for prop in properties:
+        vals.append(cv2.getTrackbarPos(prop,'calibrate_window'))
+    return vals
 
 def main():
     ## MODE SELECTION ##
-    MODE = "TESTING_STATIC"
+    MODE = "CALIBRATION_HSV"
 
     ##### FOR TESTING RUN_TIME ######
     if "TESTING_RUN" == MODE:
@@ -177,6 +150,14 @@ def main():
             # obj to remove
             blue_mount_lower_bound = [0,160,0]
             blue_mount_bound = [79,255,255]
+
+            # obj to detect green
+            blue_mount_lower_bound = [53,27,0]
+            blue_mount_bound = [97, 70, 153]
+
+            # obj to detect red
+            blue_mount_lower_bound = [1,56,0]
+            blue_mount_bound = [8, 255, 180]
             
             # detectMaze(test_frame, blue_mount_lower_bound, blue_mount_bound)
             detectMazeV2(test_frame)
@@ -184,14 +165,16 @@ def main():
                 break  # esc to quit
    
     ##### FOR CALIBRATION ######
-    elif "CALIBRATION" == MODE:
-        showUtilities()
+    elif "CALIBRATION_HSV" == MODE:
+        SLIDE_NAME = ['HL', 'SL', 'VL', 'H', 'S', 'V'] 
+        showUtilities(SLIDE_NAME)
         while True:
             test_frame = cv2.imread('test1.png')
-            doHSVCalibration(test_frame)
+            [Hl_val,Sl_val,Vl_val,H_val,S_val,V_val] = obtainSlides(SLIDE_NAME)
+            detectMaze(test_frame, [Hl_val,Sl_val,Vl_val], [H_val,S_val,V_val], ifdetectBall=False)
             if cv2.waitKey(1) == 27: 
                 break  # esc to quit
-    
+
     cv2.destroyAllWindows() # close all windows
 
 
