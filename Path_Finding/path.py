@@ -2,10 +2,16 @@ from pathfinding.core.diagonal_movement import DiagonalMovement
 from pathfinding.core.grid import Grid
 from pathfinding.finder.a_star import AStarFinder
 
-def getMovementCommand():
-    
+import serial
 
-def getPath(self, matrix, start, end):
+def getMovementCommands(map_matrix, start, end):    
+    
+    path = getPath(map_matrix, start, end)
+    movements = getCommandMovementsFromPath(path)
+    for movement in movements:
+        
+
+def getPath(matrix, start, end):
     # matrix = [
     # [1, 1, 1],
     # [1, 0, 1],
@@ -33,7 +39,7 @@ Z - South_West - 8
 '''
 
 # For now, no diagonal movements
-def getCommandMovementsFromCoordinate(curr, next):
+def getCommandMovementsFromPath(curr, next):
     cur_row = curr[0]
     cur_col = curr[1]
     next_row = next[0]
