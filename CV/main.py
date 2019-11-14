@@ -79,18 +79,22 @@ def mapMaze(frame):
 
     pixel_step_size = 200
 
+    grid_maze = filtered_maze
+
     #this is just for debug purpose -> not necessary to show in operation
 
+    grid_maze = cv2.line(grid_maze,(0,100),(maze_pixel_width, 100),(169,169,169),1)
+    grid_maze = cv2.line(grid_maze,(100,0),(100, maze_pixel_height),(169,169,169),1)
+    
     # horizontal line
-    #
     # i = 0
     # for i in range(maze_pixel_height):
-    #     grid_maze = cv2.line(filtered_maze,(0,i),(maze_pixel_width, i),(169,169,169),1)
+    #     grid_maze = cv2.line(grid_maze,(0,i),(maze_pixel_width, i),(169,169,169),1)
     #     i = i + pixel_step_size
     #
     # j = 0
     # for j in range(maze_pixel_width):
-    #     grid_maze = cv2.line(filtered_maze,(j,0),(j, maze_pixel_height),(169,169,169),1)
+    #     grid_maze = cv2.line(grid_maze,(j,0),(j, maze_pixel_height),(169,169,169),1)
     #     j = j + pixel_step_size
 
     showImage('grid', grid_maze)
