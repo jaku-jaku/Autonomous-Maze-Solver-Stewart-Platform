@@ -6,6 +6,8 @@ from imutils.perspective import four_point_transform
 from imutils import contours
 import imutils
 
+ENABLE_DEBUG = 1
+
 def showImage(caption, image):
     if ENABLE_DEBUG:
         cv2.namedWindow(caption, cv2.WINDOW_NORMAL)
@@ -66,13 +68,32 @@ def mapMaze(frame):
     # Dilation
     dilation_maze = cv2.dilate(thresh_maze, kernel, iterations=1)
     # Erosion
-    erosion_maze = cv2.erode(dilation_maze, kernel, iterations=1)
+    filtered_maze = cv2.erode(dilation_maze, kernel, iterations=1)
 
-    showImage('filtered', erosion_maze)
+    showImage('filtered', filtered_maze)
 
+    #assign grid to maze
 
+    maze_pixel_height = filtered_maze.shape[0]
+    maze_pixel_width  = filtered_maze.shape[1]
 
+    pixel_step_size = 200
 
+    #this is just for debug purpose -> not necessary to show in operation
+
+    # horizontal line
+    #
+    # i = 0
+    # for i in range(maze_pixel_height):
+    #     grid_maze = cv2.line(filtered_maze,(0,i),(maze_pixel_width, i),(169,169,169),1)
+    #     i = i + pixel_step_size
+    #
+    # j = 0
+    # for j in range(maze_pixel_width):
+    #     grid_maze = cv2.line(filtered_maze,(j,0),(j, maze_pixel_height),(169,169,169),1)
+    #     j = j + pixel_step_size
+
+    showImage('grid', grid_maze)
 
 def detectBall(frame_out, frame_gray):
     # detect circles in the image
@@ -126,7 +147,6 @@ def main():
     #MODE = "CALIBRATION_HSV"
     #MODE = "TESTING_RUN"
     MODE = "TESTING_STATIC"
-    ENABLE_DEBUG = 1
 
     ##### FOR TESTING RUN_TIME ######
     if "TESTING_RUN" == MODE:
