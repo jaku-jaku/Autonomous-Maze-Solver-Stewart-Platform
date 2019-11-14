@@ -2,6 +2,14 @@ import cv2
 import numpy as np
 import math
 import copy
+from imutils.perspective import four_point_transform
+from imutils import contours
+import imutils
+
+def showImage(caption, image):
+    cv2.namedWindow(caption, cv2.WINDOW_NORMAL)
+    cv2.resizeWindow(caption, 600,600)
+    cv2.imshow(caption, image)
 
 def imageScale(img, factor):
     return cv2.resize(img, (0,0), fx=factor, fy=factor)
@@ -26,53 +34,78 @@ def detectMaze(frame, hsvl_param, hsv_param, scale = 0.1, ifdetectBall=False):
     res = cv2.bitwise_and(frame, frame, mask= mask)
     if(ifdetectBall):
         detectBall(frame_hsv_gauss, frame_gray)
-    
+
     cv2.imshow('calibrate_window', concat_tile(
         [
-        [frame, cv2.cvtColor(frame_gray,cv2.COLOR_GRAY2RGB)], 
+        [frame, cv2.cvtColor(frame_gray,cv2.COLOR_GRAY2RGB)],
         [res,   cv2.cvtColor(mask,cv2.COLOR_GRAY2RGB)],
         ], scale))
 
 def detectMazeV2(frame, scale = 0.1):
     frame_cpy = copy.deepcopy(frame)
-    frame_b,frame_g,frame_r = cv2.split(frame_cpy)
-    frame_hsv = cv2.cvtColor(frame,cv2.COLOR_RGB2HSV)
     # Gray image op
     frame_gray = cv2.cvtColor(frame,cv2.COLOR_RGB2GRAY)
     frame_gray_gauss = cv2.GaussianBlur(frame_gray,(5,5),cv2.BORDER_DEFAULT)
     # Inverting tholdolding will give us a binary image with a white wall and a black background.
-    ret, thresh = cv2.threshold(frame_gray_gauss, 75, 255, cv2.THRESH_BINARY_INV) 
+    ret, thresh = cv2.threshold(frame_gray_gauss, 75, 255, cv2.THRESH_BINARY_INV)
+
+    # extract the maze image only 
+    contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    cnts = sorted(contours, key=cv2.contourArea, reverse=True)
+    displayCnt = None
+
+    for c in cnts:
+    	# approximate the contour
+    	peri = cv2.arcLength(c, True)
+    	approx = cv2.approxPolyDP(c, 0.02 * peri, True)
+
+    	if len(approx) == 4:
+            displayCnt = approx
+            cv2.drawContours(frame, displayCnt, -1, (0,255,0), 3)
+            showImage('approx', frame)
+            break
+
+    maze_extracted = four_point_transform(frame, displayCnt.reshape(4, 2))
+    showImage('maze_extracted', maze_extracted)
+
+    maze_gray = cv2.cvtColor(maze_extracted,cv2.COLOR_RGB2GRAY)
+    maze_gray_gauss = cv2.GaussianBlur(maze_gray,(5,5),cv2.BORDER_DEFAULT)
+    # Inverting tholdolding will give us a binary image with a white wall and a black background.
+    ret, thresh_maze = cv2.threshold(maze_gray_gauss, 60, 255, cv2.THRESH_BINARY_INV)
     # Kernel
-    ke = 10
+    ke = 20
     kernel = np.ones((ke, ke), np.uint8)
     # Dilation
-    dilation = cv2.dilate(thresh, kernel, iterations=1)
+    dilation_maze = cv2.dilate(thresh_maze, kernel, iterations=1)
     # Erosion
-    erosion = cv2.erode(dilation, kernel, iterations=1)
+    erosion_maze = cv2.erode(dilation_maze, kernel, iterations=1)
 
-    # find largest contour
-    cnt_img, contours, hierarchy = cv2.findContours(erosion, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    cntsSorted = sorted(contours, key=lambda x: cv2.contourArea(x), reverse=True)
-    rect = cv2.minAreaRect(cntsSorted[0])
-    box = cv2.boxPoints(rect)
-    box = np.int0(box)
+    showImage('filtered', erosion_maze)
 
-    # bounding contour & generate mask & merge mask
-    region_mask_new = np.zeros(erosion.shape, np.uint8)
-    cv2.drawContours(frame,[box],0, 255, 3)
-    cv2.drawContours(region_mask_new,[box],0, 255, -1)
-    merged_mask_new = erosion & region_mask_new
 
-    # apply final mask & see result
-    res = cv2.bitwise_and(frame, frame, mask= region_mask_new)
-
-    cv2.imshow('calibrate_window', concat_tile(
-        [
-        [frame,                                     cv2.cvtColor(frame_gray,cv2.COLOR_GRAY2RGB), cv2.cvtColor(thresh,cv2.COLOR_GRAY2RGB)],
-        [cv2.cvtColor(dilation,cv2.COLOR_GRAY2RGB) ,                                      frame, cv2.cvtColor(erosion,cv2.COLOR_GRAY2RGB)],
-        [res,                                                                          res, cv2.cvtColor(merged_mask_new,cv2.COLOR_GRAY2RGB)],
-        [cv2.cvtColor(frame_b,cv2.COLOR_GRAY2RGB),cv2.cvtColor(frame_g,cv2.COLOR_GRAY2RGB),cv2.cvtColor(frame_r,cv2.COLOR_GRAY2RGB)],
-        ], scale))
+    # # find largest contour
+    # cnt_img, contours, hierarchy = cv2.findContours(erosion, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
+    # cntsSorted = sorted(contours, key=lambda x: cv2.contourArea(x), reverse=True)
+    # rect = cv2.minAreaRect(cntsSorted[0])
+    # box = cv2.boxPoints(rect)
+    # box = np.int0(box)
+    #
+    # # bounding contour & generate mask & merge mask
+    # region_mask_new = np.zeros(erosion.shape, np.uint8)
+    # cv2.drawContours(frame,[box],0, 255, 3)
+    # cv2.drawContours(region_mask_new,[box],0, 255, -1)
+    # merged_mask_new = erosion & region_mask_new
+    #
+    # # apply final mask & see result
+    # res = cv2.bitwise_and(frame, frame, mask= region_mask_new)
+    #
+    # cv2.imshow('calibrate_window', concat_tile(
+    #     [
+    #     [frame,                                     cv2.cvtColor(frame_gray,cv2.COLOR_GRAY2RGB), cv2.cvtColor(thresh,cv2.COLOR_GRAY2RGB)],
+    #     [cv2.cvtColor(dilation,cv2.COLOR_GRAY2RGB) ,                                      frame, cv2.cvtColor(erosion,cv2.COLOR_GRAY2RGB)],
+    #     [res,                                                                          res, cv2.cvtColor(merged_mask_new,cv2.COLOR_GRAY2RGB)],
+    #     [cv2.cvtColor(frame_b,cv2.COLOR_GRAY2RGB),cv2.cvtColor(frame_g,cv2.COLOR_GRAY2RGB),cv2.cvtColor(frame_r,cv2.COLOR_GRAY2RGB)],
+    #     ], scale))
 
 
 def detectBall(frame_out, frame_gray):
@@ -82,14 +115,14 @@ def detectBall(frame_out, frame_gray):
     if circles is not None:
         # convert the (x, y) coordinates and radius of the circles to integers
         circles = np.round(circles[0, :]).astype("int")
-    
+
         # loop over the (x, y) coordinates and radius of the circles
         for (x, y, r) in circles:
             # draw the circle in the output image, then draw a rectangle
             # corresponding to the center of the circle
             cv2.circle(frame_out, (x, y), r, (0, 255, 0), 4)
             cv2.rectangle(frame_out, (x - 5, y - 5), (x + 5, y + 5), (0, 128, 255), -1)
-    
+
         # show the output image
         # cv2.imshow("output", imageScale(np.hstack([frame, output]),scale))
 
@@ -101,7 +134,7 @@ def init_webCam():
 
 def grab_webCam_feed(cam, mirror=False):
     ret_val, img = cam.read()
-    if mirror: 
+    if mirror:
         img = cv2.flip(img, 1)
     return img
 
@@ -124,7 +157,9 @@ def obtainSlides(properties):
 
 def main():
     ## MODE SELECTION ##
-    MODE = "CALIBRATION_HSV"
+    #MODE = "CALIBRATION_HSV"
+    #MODE = "TESTING_RUN"
+    MODE = "TESTING_STATIC"
 
     ##### FOR TESTING RUN_TIME ######
     if "TESTING_RUN" == MODE:
@@ -135,10 +170,10 @@ def main():
             maze_upper_bound = [51,115,77]
             # detectMaze(frame, maze_lower_bound, maze_upper_bound, scale = 0.3)
             detectMazeV2(test_frame)
-            if cv2.waitKey(1) == 27: 
+            if cv2.waitKey(1) == 27:
                 break  # esc to quit
         cam.release() # kill camera
-   
+
     ##### FOR TESTING STATIC ######
     elif "TESTING_STATIC" == MODE:
         while True:
@@ -158,21 +193,21 @@ def main():
             # obj to detect red
             blue_mount_lower_bound = [1,56,0]
             blue_mount_bound = [8, 255, 180]
-            
+
             # detectMaze(test_frame, blue_mount_lower_bound, blue_mount_bound)
             detectMazeV2(test_frame)
-            if cv2.waitKey(1) == 27: 
+            if cv2.waitKey(1) == 27:
                 break  # esc to quit
-   
+
     ##### FOR CALIBRATION ######
     elif "CALIBRATION_HSV" == MODE:
-        SLIDE_NAME = ['HL', 'SL', 'VL', 'H', 'S', 'V'] 
+        SLIDE_NAME = ['HL', 'SL', 'VL', 'H', 'S', 'V']
         showUtilities(SLIDE_NAME)
         while True:
             test_frame = cv2.imread('test1.png')
             [Hl_val,Sl_val,Vl_val,H_val,S_val,V_val] = obtainSlides(SLIDE_NAME)
             detectMaze(test_frame, [Hl_val,Sl_val,Vl_val], [H_val,S_val,V_val], ifdetectBall=False)
-            if cv2.waitKey(1) == 27: 
+            if cv2.waitKey(1) == 27:
                 break  # esc to quit
 
     cv2.destroyAllWindows() # close all windows
@@ -199,7 +234,7 @@ def DEPRECATED_detectScope():
     frame_gray = cv2.cvtColor(frame,cv2.COLOR_RGB2GRAY)
     frame_gray_gauss = cv2.GaussianBlur(frame_gray,(5,5),cv2.BORDER_DEFAULT)
     # Inverting tholdolding will give us a binary image with a white wall and a black background.
-    ret, thresh = cv2.threshold(frame_gray_gauss, 75, 255, cv2.THRESH_BINARY_INV) 
+    ret, thresh = cv2.threshold(frame_gray_gauss, 75, 255, cv2.THRESH_BINARY_INV)
     # Kernel
     ke = 10
     kernel = np.ones((ke, ke), np.uint8)
