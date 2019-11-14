@@ -14,6 +14,53 @@ def showImage(caption, image):
         cv2.resizeWindow(caption, 600,600)
         cv2.imshow(caption, image)
 
+debug_window_dict = {}
+def debugWindowAppend(caption, image):
+    if ENABLE_DEBUG:
+        debug_window_dict[caption] = image
+
+def debugWindowShow(title='Debug_Window'):
+    if ENABLE_DEBUG:
+        size = len(debug_window_dict)
+        width = int(round(np.sqrt(size)))
+        im_list_2d = []
+        temp = []
+        img_shape = []
+        index = 0
+        for img_name in debug_window_dict:
+            if index == 0:
+                img_shape = debug_window_dict[img_name].shape
+            else:
+                if img_shape < debug_window_dict[img_name].shape:
+                    img_shape = debug_window_dict[img_name].shape
+            index += 1
+
+        index = 0
+        for img_name in debug_window_dict:
+            dummy_img = np.full(img_shape, 125, np.uint8)
+            if index%width == 0 and index!=0:
+                im_list_2d.append(temp)
+                temp = []
+            last_image = debug_window_dict[img_name]
+            centralPIP(dummy_img,last_image)
+            temp.append(dummy_img)
+            index = index + 1
+        # img1.paste(img, box=(x1, y1, x2, y2), mask=img)
+        tot_dummies = width - len(temp)
+        dummy_img = np.full(img_shape, 125, np.uint8)
+        for i in range(0, tot_dummies):
+            temp.append(dummy_img)
+        im_list_2d.append(temp)
+        if (size < 20):
+            cv2.imshow('Debug_window', concat_tile(im_list_2d, scale = 0.1))
+
+def centralPIP(bkg_img, frg_img):
+    img_shape = bkg_img.shape
+    temp_shape = frg_img.shape
+    x = int(img_shape[0]/2) - int(temp_shape[0]/2)
+    y = int(img_shape[1]/2) - int(temp_shape[1]/2)
+    bkg_img[x:x+temp_shape[0], y:y+temp_shape[1]] = frg_img
+
 def imageScale(img, factor):
     return cv2.resize(img, (0,0), fx=factor, fy=factor)
 
@@ -26,9 +73,24 @@ def concat_tile(im_list_2d, scale):
         im_list_v.append(cv2.hconcat(newim_list_h))
     return cv2.vconcat(im_list_v)
 
+def detectMark(frame, list_of_bounds, scale = 0.1):
+    frame_hsv = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
+    frame_hsv_gauss = cv2.GaussianBlur(frame_hsv,(5,5),cv2.BORDER_DEFAULT)
+    # define range of color in HSV
+    list_of_masks = []
+    for bnd in list_of_bounds:
+        list_of_masks.append({'tag':bnd['tag'], 
+        'mask': cv2.inRange(frame_hsv_gauss, np.array(bnd['lower']), np.array(bnd['upper']))})
 
-def extractMaze(frame):
-    frame_cpy = copy.deepcopy(frame)
+    merged_mask = list_of_masks[0]['mask']
+    for mask in list_of_masks:
+        merged_mask = merged_mask | mask['mask']
+    res = cv2.bitwise_and(frame, frame, mask= merged_mask)
+
+    debugWindowAppend('mask', cv2.cvtColor(merged_mask, cv2.COLOR_GRAY2BGR))
+    debugWindowAppend('result', res)
+
+def extractMaze(frame, CV2_VERSION):
     # Gray image op
     frame_gray = cv2.cvtColor(frame,cv2.COLOR_RGB2GRAY)
     frame_gray_gauss = cv2.GaussianBlur(frame_gray,(5,5),cv2.BORDER_DEFAULT)
@@ -36,7 +98,10 @@ def extractMaze(frame):
     ret, thresh = cv2.threshold(frame_gray_gauss, 75, 255, cv2.THRESH_BINARY_INV)
 
     # extract the maze image only
-    contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    if CV2_VERSION == '3.4.3':
+        _, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    else:
+        contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = sorted(contours, key=cv2.contourArea, reverse=True)
     displayCnt = None
 
@@ -48,15 +113,15 @@ def extractMaze(frame):
     	if len(approx) == 4:
             displayCnt = approx
             cv2.drawContours(frame, displayCnt, -1, (0,255,0), 3)
-            showImage('approx', frame)
             break
 
     maze_extracted = four_point_transform(frame, displayCnt.reshape(4, 2))
-    showImage('maze_extracted', maze_extracted)
+    debugWindowAppend('approx', frame)
+    debugWindowAppend('maze_extracted', maze_extracted)
     return maze_extracted
 
 def mapMaze(frame):
-    frame_cpy = copy.deepcopy(frame)
+    # frame_cpy = copy.deepcopy(frame)
 
     maze_gray = cv2.cvtColor(frame,cv2.COLOR_RGB2GRAY)
     maze_gray_gauss = cv2.GaussianBlur(maze_gray,(5,5),cv2.BORDER_DEFAULT)
@@ -147,9 +212,11 @@ def obtainSlides(properties):
     return vals
 
 def main():
+    CV2_VERSION = cv2.__version__
+    print('CV2 VERSION:' ,CV2_VERSION)
     ## MODE SELECTION ##
-    #MODE = "CALIBRATION_HSV"
-    #MODE = "TESTING_RUN"
+    # MODE = "CALIBRATION_HSV"
+    # MODE = "TESTING_RUN"
     MODE = "TESTING_STATIC"
 
     ##### FOR TESTING RUN_TIME ######
@@ -157,10 +224,7 @@ def main():
         cam = init_webCam()
         while True:
             frame = grab_webCam_feed(cam, mirror=True)
-            maze_lower_bound = [0,0,0]
-            maze_upper_bound = [51,115,77]
-            # detectMaze(frame, maze_lower_bound, maze_upper_bound, scale = 0.3)
-            detectMazeV2(test_frame)
+            extractMaze(test_frame, CV2_VERSION)
             if cv2.waitKey(1) == 27:
                 break  # esc to quit
         cam.release() # kill camera
@@ -169,11 +233,13 @@ def main():
     elif "TESTING_STATIC" == MODE:
         while True:
             test_frame = cv2.imread('test1.png')
-
-            # detectMaze(test_frame, blue_mount_lower_bound, blue_mount_bound)
-            maze = extractMaze(test_frame)
-            mapMaze(maze)
-
+            # extract maze bndry
+            maze_frame = extractMaze(test_frame, CV2_VERSION)        
+            # marker detection
+            list_of_bounds = [  {'tag': 'start', 'lower':[53,27,0], 'upper':[97, 70, 153]},
+                                {'tag': 'end','lower':[1,56,0],  'upper':[8, 255, 180]}     ]
+            detectMark(maze_frame, list_of_bounds)
+            debugWindowShow()
             if cv2.waitKey(1) == 27:
                 break  # esc to quit
 
@@ -184,7 +250,7 @@ def main():
         while True:
             test_frame = cv2.imread('test1.png')
             [Hl_val,Sl_val,Vl_val,H_val,S_val,V_val] = obtainSlides(SLIDE_NAME)
-            detectMaze(test_frame, [Hl_val,Sl_val,Vl_val], [H_val,S_val,V_val], ifdetectBall=False)
+            detectMark(test_frame, [Hl_val,Sl_val,Vl_val], [H_val,S_val,V_val])
             if cv2.waitKey(1) == 27:
                 break  # esc to quit
 
