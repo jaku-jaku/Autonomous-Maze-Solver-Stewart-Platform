@@ -13,7 +13,7 @@ def debugWindowAppend(caption, image):
     if ENABLE_DEBUG:
         debug_window_dict[caption] = image
 
-def debugWindowShow(title='Debug_Window'):
+def debugWindowShow(title='Debug_Window', scale = 0.1):
     if ENABLE_DEBUG:
         size = len(debug_window_dict)
         width = int(round(np.sqrt(size)))
@@ -46,7 +46,7 @@ def debugWindowShow(title='Debug_Window'):
             temp.append(dummy_img)
         im_list_2d.append(temp)
         if (size < 20):
-            cv2.imshow(title, concat_tile(im_list_2d, scale = 0.1))
+            cv2.imshow(title, concat_tile(im_list_2d, scale))
 
 def centralPIP(bkg_img, frg_img):
     img_shape = bkg_img.shape
