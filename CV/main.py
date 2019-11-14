@@ -13,7 +13,12 @@ def debugWindowAppend(caption, image):
     if ENABLE_DEBUG:
         debug_window_dict[caption] = image
 
-def debugWindowShow(title='Debug_Window', scale = 0.1):
+def random_color():
+    rgbl=[255,0,0]
+    np.random.shuffle(rgbl)
+    return tuple(rgbl)
+
+def debugWindowShow(title='Debug_Window', scale = 0.15):
     if ENABLE_DEBUG:
         size = len(debug_window_dict)
         width = int(round(np.sqrt(size)))
@@ -48,12 +53,20 @@ def debugWindowShow(title='Debug_Window', scale = 0.1):
         if (size < 20):
             cv2.imshow(title, concat_tile(im_list_2d, scale))
 
-def centralPIP(bkg_img, frg_img):
-    img_shape = bkg_img.shape
-    temp_shape = frg_img.shape
-    x = int(img_shape[0]/2) - int(temp_shape[0]/2)
-    y = int(img_shape[1]/2) - int(temp_shape[1]/2)
-    bkg_img[x:x+temp_shape[0], y:y+temp_shape[1]] = frg_img
+def centralPIP(bkg_img, frg_img, autoFit=True):
+    bw, bh, bc = bkg_img.shape
+    fw, fh, fc = frg_img.shape
+    scale_factor = 1
+    front = frg_img
+    if autoFit:
+        rw = bw/fw
+        rh = bh/fh
+        r = min(rw, rh)
+        front = cv2.resize(frg_img, dsize=(int(fh*r), int(fw*r)), interpolation=cv2.INTER_CUBIC)
+        fw, fh, fc = front.shape
+    x = int(bw/2) - int(fw/2)
+    y = int(bh/2) - int(fh/2)
+    bkg_img[x:x+fw, y:y+fh] = front
 
 def imageScale(img, factor):
     return cv2.resize(img, (0,0), fx=factor, fy=factor)
@@ -67,7 +80,8 @@ def concat_tile(im_list_2d, scale):
         im_list_v.append(cv2.hconcat(newim_list_h))
     return cv2.vconcat(im_list_v)
 
-def detectMark(frame, list_of_bounds, scale = 0.1):
+def detectMark(frame, list_of_bounds, CV2_VERSION, scale = 0.1):
+    frame_cpy = copy.deepcopy(frame)
     frame_hsv = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
     frame_hsv_gauss = cv2.GaussianBlur(frame_hsv,(5,5),cv2.BORDER_DEFAULT)
     # define range of color in HSV
@@ -76,13 +90,42 @@ def detectMark(frame, list_of_bounds, scale = 0.1):
         list_of_masks.append({'tag':bnd['tag'], 
         'mask': cv2.inRange(frame_hsv_gauss, np.array(bnd['lower']), np.array(bnd['upper']))})
 
+    coords = {}
+    for mask in list_of_masks:
+        # extract the maze image only
+        if CV2_VERSION == '3.4.3':
+            _, contours, hierarchy = cv2.findContours(mask['mask'], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        else:
+            contours, hierarchy = cv2.findContours(mask['mask'], cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+        cnts = sorted(contours, key=cv2.contourArea, reverse=True)
+        if len(cnts) > 0:
+            # compute the center of the contour
+            M = cv2.moments(cnts[0])
+            area = cv2.contourArea(cnts[0])
+            if area > 10000: # for radius of 50
+                cX = int(M["m10"] / M["m00"])
+                cY = int(M["m01"] / M["m00"])
+                clr = random_color()
+                # cv2.drawContours(frame_cpy, cnts[0], -1, (0, 255, 0), 2)
+                cv2.circle(frame_cpy, (cX, cY), 10, clr, -1)
+                cv2.circle(frame_cpy, (cX, cY), int(np.sqrt(area)/2), clr, 8) #area as the circle size for confidence measure
+                cv2.putText(frame_cpy, mask['tag'], (cX - 70, cY - 60),
+                    cv2.FONT_HERSHEY_SIMPLEX, 3, clr, 5)
+            else:
+                cX = -1
+                cY = -1
+                area = -1
+            coords[mask['tag']] = [cX, cY, area]
+
     merged_mask = list_of_masks[0]['mask']
     for mask in list_of_masks:
         merged_mask = merged_mask | mask['mask']
     res = cv2.bitwise_and(frame, frame, mask= merged_mask)
 
+    debugWindowAppend('highlighted', frame_cpy)
     debugWindowAppend('mask', cv2.cvtColor(merged_mask, cv2.COLOR_GRAY2BGR))
     debugWindowAppend('result', res)
+    return coords
 
 def extractMaze(frame, CV2_VERSION):
     # Gray image op
@@ -232,9 +275,12 @@ def main():
             # extract maze bndry
             maze_frame = extractMaze(test_frame, CV2_VERSION)        
             # marker detection
-            list_of_bounds = [  {'tag': 'start', 'lower':[53,27,0], 'upper':[97, 70, 153]},
-                                {'tag': 'end','lower':[1,56,0],  'upper':[8, 255, 180]}     ]
-            detectMark(maze_frame, list_of_bounds)
+            list_of_bounds =[   {'tag': 'end', 'lower':[53,27,0], 'upper':[97, 70, 153]},
+                                {'tag': 'start','lower':[1,56,0],  'upper':[8, 255, 180]},
+                                {'tag': 'ball', 'lower':[0,0,215], 'upper':[255,255,255]},
+                            ]
+            coord = detectMark(maze_frame, list_of_bounds, CV2_VERSION)
+            # print(coord)
             debugWindowShow()
             if cv2.waitKey(1) == 27:
                 break  # esc to quit
@@ -245,10 +291,14 @@ def main():
         windowName = showUtilities(SLIDE_NAME)
         while True:
             test_frame = cv2.imread('test1.png')
+            # extract maze bndry
+            maze_frame = extractMaze(test_frame, CV2_VERSION)
+            # marker runing
             [Hl_val,Sl_val,Vl_val,H_val,S_val,V_val] = obtainSlides(SLIDE_NAME)
             bound = [ {'tag':'DEBUG', 'lower':[Hl_val,Sl_val,Vl_val], 'upper':[H_val,S_val,V_val]} ]
-            detectMark(test_frame, bound)
-            debugWindowShow(windowName)
+            coord = detectMark(maze_frame, bound, CV2_VERSION)
+            print(coord)
+            debugWindowShow(windowName, scale=0.1)
             if cv2.waitKey(1) == 27:
                 break  # esc to quit
 
