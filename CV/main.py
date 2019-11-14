@@ -8,12 +8,6 @@ import imutils
 
 ENABLE_DEBUG = 1
 
-def showImage(caption, image):
-    if ENABLE_DEBUG:
-        cv2.namedWindow(caption, cv2.WINDOW_NORMAL)
-        cv2.resizeWindow(caption, 600,600)
-        cv2.imshow(caption, image)
-
 debug_window_dict = {}
 def debugWindowAppend(caption, image):
     if ENABLE_DEBUG:
@@ -52,7 +46,7 @@ def debugWindowShow(title='Debug_Window'):
             temp.append(dummy_img)
         im_list_2d.append(temp)
         if (size < 20):
-            cv2.imshow('Debug_window', concat_tile(im_list_2d, scale = 0.1))
+            cv2.imshow(title, concat_tile(im_list_2d, scale = 0.1))
 
 def centralPIP(bkg_img, frg_img):
     img_shape = bkg_img.shape
@@ -135,7 +129,7 @@ def mapMaze(frame):
     # Erosion
     filtered_maze = cv2.erode(dilation_maze, kernel, iterations=1)
 
-    showImage('filtered', filtered_maze)
+    debugWindowAppend('filtered', filtered_maze)
 
     #assign grid to maze
 
@@ -162,7 +156,7 @@ def mapMaze(frame):
     #     grid_maze = cv2.line(grid_maze,(j,0),(j, maze_pixel_height),(169,169,169),1)
     #     j = j + pixel_step_size
 
-    showImage('grid', grid_maze)
+    debugWindowAppend('grid', grid_maze)
 
 def detectBall(frame_out, frame_gray):
     # detect circles in the image
@@ -204,6 +198,7 @@ def showUtilities(properties):
     # create trackbars for color change
     for prop in properties:
         cv2.createTrackbar(prop,'calibrate_window',0,255,nothing)
+    return 'calibrate_window'
 
 def obtainSlides(properties):
     vals = []
@@ -224,7 +219,8 @@ def main():
         cam = init_webCam()
         while True:
             frame = grab_webCam_feed(cam, mirror=True)
-            extractMaze(test_frame, CV2_VERSION)
+            maze_frame = extractMaze(test_frame, CV2_VERSION)
+            debugWindowShow()
             if cv2.waitKey(1) == 27:
                 break  # esc to quit
         cam.release() # kill camera
@@ -246,11 +242,13 @@ def main():
     ##### FOR CALIBRATION ######
     elif "CALIBRATION_HSV" == MODE:
         SLIDE_NAME = ['HL', 'SL', 'VL', 'H', 'S', 'V']
-        showUtilities(SLIDE_NAME)
+        windowName = showUtilities(SLIDE_NAME)
         while True:
             test_frame = cv2.imread('test1.png')
             [Hl_val,Sl_val,Vl_val,H_val,S_val,V_val] = obtainSlides(SLIDE_NAME)
-            detectMark(test_frame, [Hl_val,Sl_val,Vl_val], [H_val,S_val,V_val])
+            bound = [ {'tag':'DEBUG', 'lower':[Hl_val,Sl_val,Vl_val], 'upper':[H_val,S_val,V_val]} ]
+            detectMark(test_frame, bound)
+            debugWindowShow(windowName)
             if cv2.waitKey(1) == 27:
                 break  # esc to quit
 
