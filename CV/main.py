@@ -210,10 +210,13 @@ def mapMaze_Array(frame, feature_coord):
     filter_maze_pixel_height = filtered_maze.shape[0]
     filter_maze_pixel_width  = filtered_maze.shape[1]
 
-    map_array = []
     start_coord = feature_coord['start'][0:2]
     end_coord   = feature_coord['end'][0:2]
-    print(feature_coord['ball'][0:2])
+    ball_coord  = feature_coord['ball'][0:2]
+    map_array = []
+    start_array = [ (math.floor( start_coord[0] /grid_size)) , (math.floor(start_coord[1] /grid_size)) ]
+    end_array = [(math.floor( end_coord[0] /grid_size)) , (math.floor(end_coord[1] /grid_size))]
+
 
     for j in range(0, filter_maze_pixel_width, grid_size):
         map_array_1D = []
@@ -226,11 +229,21 @@ def mapMaze_Array(frame, feature_coord):
                 map_array_1D.append(0)
             else:
                 map_array_1D.append(1)
+
         map_array.append(map_array_1D)
+
+    #add start and end color fill
+    start_x_pixel = start_array[0] * grid_size
+    start_y_pixel = start_array[1] * grid_size
+    end_x_pixel = end_array[0] * grid_size
+    end_y_pixel = end_array[1] * grid_size
+
+    cv2.rectangle(frame,(start_x_pixel , start_y_pixel),( start_x_pixel + grid_size, start_y_pixel + grid_size),(0,255,255),-1)
+    cv2.rectangle(frame,(end_x_pixel , end_y_pixel),( end_x_pixel + grid_size, end_y_pixel + grid_size),(0,255,255),-1)
 
     showImage('obstacle', frame)
 
-    return map_array
+    return map_array, start_array, end_array
 
 def mazeSolver_Phase1(frame, cv2_version):
     #maze extraction from captured image
