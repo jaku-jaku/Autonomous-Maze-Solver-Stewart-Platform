@@ -19,12 +19,18 @@ def showImage(caption, image):
 debug_window_dict = {}
 def debugWindowAppend(caption, image):
     if ENABLE_DEBUG:
-        debug_window_dict[caption] = image
+        if len(image.shape) == 2:
+            debug_window_dict[caption] = cv2.cvtColor(image, cv2.COLOR_GRAY2BGR)
+        else:
+            debug_window_dict[caption] = image
 
 def random_color():
     rgbl=[255,0,0]
     np.random.shuffle(rgbl)
     return tuple(rgbl)
+
+def apply_overlay(output, overlay, alpha):
+    cv2.addWeighted(overlay, alpha, output, 1 - alpha, 0, output)
 
 def debugWindowShow(title='Debug_Window', scale = 0.15):
     if ENABLE_DEBUG:
@@ -50,6 +56,8 @@ def debugWindowShow(title='Debug_Window', scale = 0.15):
                 temp = []
             last_image = debug_window_dict[img_name]
             centralPIP(dummy_img,last_image)
+            cv2.putText(dummy_img, img_name, (20, 60),
+                    cv2.FONT_HERSHEY_SIMPLEX, 3, (255,255,255), 5)
             temp.append(dummy_img)
             index = index + 1
         # img1.paste(img, box=(x1, y1, x2, y2), mask=img)
@@ -131,7 +139,7 @@ def detectMark(frame, list_of_bounds, CV2_VERSION, scale = 0.1):
     res = cv2.bitwise_and(frame, frame, mask= merged_mask)
 
     debugWindowAppend('highlighted', frame_cpy)
-    debugWindowAppend('mask', cv2.cvtColor(merged_mask, cv2.COLOR_GRAY2BGR))
+    debugWindowAppend('mask', merged_mask)
     debugWindowAppend('result', res)
     return coords
 
@@ -159,11 +167,11 @@ def extractMaze(frame, cv2_version):
     	if len(approx) == 4:
             displayCnt = approx
             cv2.drawContours(frame, displayCnt, -1, (0,255,0), 3)
-            showImage('approx', frame)
+            debugWindowAppend('approx', frame)
             break
 
     maze_extracted = four_point_transform(frame, displayCnt.reshape(4, 2))
-    showImage('maze_extracted', maze_extracted)
+    debugWindowAppend('maze_extracted', maze_extracted)
     return maze_extracted
 
 def grid_on(frame_grid, pixel_step_size):
@@ -179,10 +187,10 @@ def grid_on(frame_grid, pixel_step_size):
     for j in range(0, maze_pixel_width, pixel_step_size):
         frame_grid = cv2.line(frame_grid,(j,0),(j, maze_pixel_height),(169,169,169),1)
 
-    showImage('grid', frame_grid)
+    debugWindowAppend('grid', frame_grid)
 
 def mapMaze_Array(frame, feature_coord, grid_size):
-
+    temp = frame.copy()
     maze_gray = cv2.cvtColor(frame,cv2.COLOR_RGB2GRAY)
     maze_gray_gauss = cv2.GaussianBlur(maze_gray,(5,5),cv2.BORDER_DEFAULT)
     # Inverting tholdolding will give us a binary image with a white wall and a black background.
@@ -198,7 +206,7 @@ def mapMaze_Array(frame, feature_coord, grid_size):
     # Erosion
     filtered_maze = cv2.erode(dilation_maze, kernel, iterations=1)
 
-    showImage('filtered', filtered_maze)
+    debugWindowAppend('filtered', filtered_maze)
 
     if ENABLE_GRID:
         grid_image = filtered_maze
@@ -223,7 +231,7 @@ def mapMaze_Array(frame, feature_coord, grid_size):
             roi = filtered_maze[j: j + grid_size , i: i + grid_size]
             if ( np.sum(roi) > (255 * grid_size * grid_size / 6) ):
             #filtered_maze[grid_size, grid_size] = (0, 255,0)
-                cv2.rectangle(frame,(i,j),(i+grid_size, j+grid_size),(0,0,255),-1)
+                cv2.rectangle(temp,(i,j),(i+grid_size, j+grid_size),(0,125,255),-1)
                 # obstacle
                 map_array_1D.append(0)
             else:
@@ -239,20 +247,25 @@ def mapMaze_Array(frame, feature_coord, grid_size):
     start_y_pixel = start_array[1] * grid_size
     end_x_pixel = end_array[0] * grid_size
     end_y_pixel = end_array[1] * grid_size
+    ball_pixel = [ball_array[0] * grid_size, ball_array[1] * grid_size]
 
-    cv2.rectangle(frame,(start_x_pixel , start_y_pixel),( start_x_pixel + grid_size, start_y_pixel + grid_size),(0,255,255),-1)
-    cv2.rectangle(frame,(end_x_pixel , end_y_pixel),( end_x_pixel + grid_size, end_y_pixel + grid_size),(0,255,255),-1)
+    apply_overlay(frame, temp, 0.5)
+    cv2.rectangle(frame,(start_x_pixel , start_y_pixel),( start_x_pixel + grid_size, start_y_pixel + grid_size),(0,0,255),-1)
+    cv2.rectangle(frame,(end_x_pixel , end_y_pixel),( end_x_pixel + grid_size, end_y_pixel + grid_size),(255,0,0),-1)
+    cv2.rectangle(frame,(ball_pixel[0], ball_pixel[1]),( ball_pixel[0] + grid_size, ball_pixel[1] + grid_size),(255,255,255),-1)
 
-    showImage('obstacle', frame)
+    # debugWindowAppend('obstacle', frame)
 
-    return map_array, start_array, end_array
+    return map_array, start_array, end_array, ball_array
 
-def paintPath(maze_frame, path, grid_size):
+def paintPath(maze_frame, path, grid_size, color=(0,255,0)):
+    temp = maze_frame.copy()
     for coord in path:
         x = coord[0] * grid_size
         y = coord[1] * grid_size
-        cv2.rectangle(maze_frame,(x , y),( x + grid_size, y + grid_size),(0,255,0),-1)
-    showImage('path', maze_frame)
+        cv2.rectangle(temp,(x , y),( x + grid_size, y + grid_size),color,-1)
+    apply_overlay(maze_frame, temp, 0.4)
+    return maze_frame
   
 def mazeSolver_Phase1(frame, cv2_version, grid_size):
     #maze extraction from captured image
@@ -275,10 +288,11 @@ def mazeSolver_Phase1(frame, cv2_version, grid_size):
     maze = []
     start = []
     end = []
+    ball = []
     if All_tags_exist:
-        maze, start, end  = mapMaze_Array(maze_frame, feature_coord, grid_size)
+        maze, start, end, ball  = mapMaze_Array(maze_frame, feature_coord, grid_size)
         
-    return  maze, start, end, maze_frame
+    return  maze, start, end, ball, maze_frame
 
 def detectBall(frame_out, frame_gray):
     # detect circles in the image
@@ -350,19 +364,23 @@ def main():
             # mirror the image
             frame = cv2.flip(frame, 0)
             # extract maze bndry
-            maze, start, end, maze_frame = mazeSolver_Phase1(frame, CV2_VERSION, GRID_SIZE)
+            maze, start, end, ball, maze_frame = mazeSolver_Phase1(frame, CV2_VERSION, GRID_SIZE)
             if len(maze) == 0:
                 print('[ERR] UNABLE to recognize Maze')
             else:
                 path = find_path(maze, start, end)
+                path_realTime = find_path(maze, ball, end)
                 if len(path) == 0:
                     print('[ERR] No Path Found')
                 else:
-                    paintPath(maze_frame, path, GRID_SIZE)
+                    temp = maze_frame.copy()
+                    temp2 = maze_frame.copy()
+                    path_frame1 = paintPath(temp, path, GRID_SIZE)
+                    path_frame2 = paintPath(temp2, path_realTime, GRID_SIZE, color=(255,125,125))
+                    debugWindowAppend('path1', path_frame1)
+                    debugWindowAppend('path realtime', path_frame2)
                     send_path(path)
-
             debugWindowShow()
-
             if RUNONCE:
                 # HOLD till esc to quit
                 while True:
