@@ -11,28 +11,28 @@ def sendCommands(commands, ser):
             ser.write(command[0].encode())
             time.sleep(command[1])
 
-def main():
+def solve_send_paths(matrix, start, end):
     ser = serial.Serial()
-    ser.port = '/dev/tty.usbmodem141303'
+    ser.port = '/dev/tty.usbmodem142303'
     ser.baudrate = 9600
     ser.open()
 
-    matrix = [
-        [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0],
-        [0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0],
-        [0, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0],
-        [0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0],
-        [0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0],
-        [0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0],
-        [0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0],
-        [0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0],
-        [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-        [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-    ]
-    # coordinates as [x, y]
-    start = [1, 7]
-    end = [9, 3]
+    # matrix = [
+    #     [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0],
+    #     [0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0],
+    #     [0, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0],
+    #     [0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0],
+    #     [0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0],
+    #     [0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0],
+    #     [0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0],
+    #     [0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0],
+    #     [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0],
+    #     [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
+    #     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
+    # ]
+    # # coordinates as [x, y]
+    # start = [1, 7]
+    # end = [9, 3]
 
     pathA = PathA()
     # print(pathA.getCommandMovementsFromPath(pathA.getPath(matrix, start, end), True))
@@ -49,11 +49,10 @@ def main():
         else: 
             cleaned_commands.append([commands[i], count])
             count = 0.8
+            # cleaned_commands.append(['0', count])
         i += 1
     cleaned_commands.append([commands[len(commands) - 1], count])
     cleaned_commands.append(['0', count])
-    print(commands)
-    print(cleaned_commands)
     sendCommands(cleaned_commands, ser)
     ser.close()
 
