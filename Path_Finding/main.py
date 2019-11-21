@@ -157,6 +157,8 @@ def extractMaze(frame, cv2_version):
     else:
         contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     cnts = sorted(contours, key=cv2.contourArea, reverse=True)
+    # cv2.drawContours(frame, contours, -1, (0,255,0), 3)
+    # showImage("contour", frame)
     displayCnt = None
 
     for c in cnts:
@@ -272,7 +274,7 @@ def mazeSolver_Phase1(frame, cv2_version, grid_size):
     maze_frame = extractMaze(frame, cv2_version)
 
     # marker detection
-    list_of_bounds =[   {'tag': 'end', 'lower':[53,27,0], 'upper':[97, 70, 153]},
+    list_of_bounds =[   {'tag': 'end', 'lower':[59,39,0], 'upper':[88,244,172]},
                         {'tag': 'start','lower':[1,56,0],  'upper':[8, 255, 180]},
                         {'tag': 'ball', 'lower':[0,0,215], 'upper':[255,255,255]},
                     ]
@@ -289,10 +291,10 @@ def mazeSolver_Phase1(frame, cv2_version, grid_size):
     start = []
     end = []
     ball = []
-    if All_tags_exist:
-        maze, start, end, ball  = mapMaze_Array(maze_frame, feature_coord, grid_size)
+    # if All_tags_exist:
+    #     maze, start, end, ball = mapMaze_Array(maze_frame, feature_coord, grid_size)
         
-    return  maze, start, end, ball, maze_frame
+    return maze, start, end, ball, maze_frame
 
 def detectBall(frame_out, frame_gray):
     # detect circles in the image
@@ -356,13 +358,13 @@ def main():
         cam = []
         if "TESTING_RUN" == MODE:
             cam = init_webCam()
-        while True:
-            if "TESTING_RUN" == MODE:
-                frame = grab_webCam_feed(cam, mirror=True)
-            else:
-                frame = cv2.imread('test1.png')
+            frame = grab_webCam_feed(cam, mirror=True)
+            cv2.imwrite('chicken.png', frame)
             # mirror the image
             frame = cv2.flip(frame, 0)
+        while True:
+            if "TESTING_STATIC" == MODE:
+                frame = cv2.imread('chicken.png')
             # extract maze bndry
             maze, start, end, ball, maze_frame = mazeSolver_Phase1(frame, CV2_VERSION, GRID_SIZE)
             if len(maze) == 0:

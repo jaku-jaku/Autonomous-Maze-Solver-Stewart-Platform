@@ -12,6 +12,7 @@ def sendCommands(commands, ser):
             time.sleep(command[1])
 
 def find_path(maze, start, end):
+    print('Ima end these coordinates')
     print(start, end)
     pathA = PathA()
     return pathA.getPath(maze, start, end)
