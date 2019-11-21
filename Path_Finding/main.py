@@ -350,7 +350,7 @@ def main():
     # MODE = "TESTING_RUN"
     MODE = "TESTING_STATIC"
     RUNONCE = True
-    GRID_SIZE = 80
+    GRID_SIZE = 90
     ##### FOR TESTING RUN_TIME ######
     if "TESTING_RUN" == MODE or "TESTING_STATIC" == MODE:
         cam = []
