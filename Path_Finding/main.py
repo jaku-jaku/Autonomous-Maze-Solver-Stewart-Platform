@@ -231,10 +231,9 @@ def mapMaze_Array(frame, feature_coord, grid_size):
                 map_array_1D.append(1)
         map_array.append(map_array_1D)
     
-    map_array[start_array[0]][start_array[1]] = 1
-    map_array[end_array[0]][end_array[1]] = 1
-    map_array[ball_array[0]][ball_array[1]] = 1
-
+    map_array[start_array[1]][start_array[0]] = 1
+    map_array[end_array[1]][end_array[0]] = 1
+    map_array[ball_array[1]][ball_array[0]] = 1
     #add start and end color fill
     start_x_pixel = start_array[0] * grid_size
     start_y_pixel = start_array[1] * grid_size
