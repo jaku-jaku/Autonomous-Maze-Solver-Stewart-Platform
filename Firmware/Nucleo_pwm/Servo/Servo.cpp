@@ -1,74 +1,43 @@
-/* mbed R/C Servo Library
- *  
- * Copyright (c) 2007-2010 sford, cstyles
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
- * THE SOFTWARE.
- */
- 
 #include "Servo.h"
 #include "mbed.h"
 
-static float clamp(float value, float min, float max) {
-    if(value < min) {
-        return min;
-    } else if(value > max) {
-        return max;
-    } else {
-        return value;
+Servo::Servo(PinName pin, const Servo::calib_params_t* calib) : _pwm(pin), _calibration(calib){
+    setPosition(_calibration->def.pwm);
+    _range.ang = _calibration->max.ang - _calibration->min.ang;
+    _range.pwm = _calibration->max.pwm - _calibration->min.pwm;
+}
+
+void Servo::setPosition(const degree_t angle) {
+    Servo::pwm_ang_pair_t temp;
+    if (angle > _calibration->max.ang)
+    {
+        temp.ang = _calibration->max.ang;
     }
+    else if (angle < _calibration->min.ang)
+    {
+        temp.ang = _calibration->min.ang;
+    }
+    else
+    {
+        temp.ang = angle; // do nothing
+    }
+    temp.pwm = (temp.ang - _calibration->min.ang)*_range.pwm/_range.ang + _calibration->min.pwm;
+    _pwm.pulsewidth_us(temp.pwm);
+
+    // Need a mutex if multi tasking
+    _current = temp;
 }
 
-Servo::Servo(PinName pin) : _pwm(pin) {
-    calibrate();
-    write(0.5);
+void Servo::goToDefault(void){
+    _pwm.pulsewidth_us(_calibration->def.pwm);
 }
 
-void Servo::write(float percent) {
-    float offset = _range * 2.0 * (percent - 0.5);
-    _pwm.pulsewidth(0.0015 + clamp(offset, -_range, _range));
-    _p = clamp(percent, 0.0, 1.0);
+Servo::pwm_ang_pair_t Servo::getStatus(void){
+    return _current;
 }
 
-void Servo::position(float degrees) {
-    float offset = _range * (degrees / _degrees);
-    _pwm.pulsewidth(0.0015 + clamp(offset, -_range, _range));
-}
-
-void Servo::calibrate(float range, float degrees) {
-    _range = range;
-    _degrees = degrees;
-}
-
-float Servo::read() {
-    return _p;
-}
-
-Servo& Servo::operator= (float percent) { 
-    write(percent);
+Servo& Servo::operator= (degree_t angle) { 
+    setPosition(angle);
     return *this;
 }
 
-Servo& Servo::operator= (Servo& rhs) {
-    write(rhs.read());
-    return *this;
-}
-
-Servo::operator float() {
-    return read();
-}
