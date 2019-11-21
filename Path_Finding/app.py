@@ -11,11 +11,18 @@ def sendCommands(commands, ser):
             ser.write(command[0].encode())
             time.sleep(command[1])
 
-def solve_send_paths(matrix, start, end):
-    ser = serial.Serial()
-    ser.port = '/dev/tty.usbmodem142303'
-    ser.baudrate = 9600
-    ser.open()
+def find_path(maze, start, end):
+    print(start, end)
+    pathA = PathA()
+    return pathA.getPath(maze, start, end)
+
+def send_path(path):
+    pathA = PathA()
+    commands = pathA.getCommandMovementsFromPath(path, True)
+    # ser = serial.Serial()
+    # ser.port = '/dev/tty.usbmodem142303'
+    # ser.baudrate = 9600
+    # ser.open()
 
     # matrix = [
     #     [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0],
@@ -33,12 +40,9 @@ def solve_send_paths(matrix, start, end):
     # # coordinates as [x, y]
     # start = [1, 7]
     # end = [9, 3]
+    # print
 
-    pathA = PathA()
-    # print(pathA.getCommandMovementsFromPath(pathA.getPath(matrix, start, end), True))
-
-    commands = pathA.getCommandMovementsFromPath(pathA.getPath(matrix, start, end), True)
-
+    print(commands)
     count = 0.3
     # [4,2,2,1,1]
     cleaned_commands = [['0', 2.5]]
@@ -53,10 +57,11 @@ def solve_send_paths(matrix, start, end):
         i += 1
     cleaned_commands.append([commands[len(commands) - 1], count])
     cleaned_commands.append(['0', count])
-    sendCommands(cleaned_commands, ser)
-    ser.close()
+    print(cleaned_commands)
+    # sendCommands(cleaned_commands, ser)
+    # ser.close()
 
-main()
+# main()
 '''
     W - North - 1
     D - East - 2
