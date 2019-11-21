@@ -247,6 +247,13 @@ def mapMaze_Array(frame, feature_coord, grid_size):
 
     return map_array, start_array, end_array
 
+def paintPath(maze_frame, path, grid_size):
+    for coord in path:
+        x = coord[0] * grid_size
+        y = coord[1] * grid_size
+        cv2.rectangle(maze_frame,(x , y),( x + grid_size, y + grid_size),(0,255,0),-1)
+    showImage('path', maze_frame)
+  
 def mazeSolver_Phase1(frame, cv2_version, grid_size):
     #maze extraction from captured image
     maze_frame = extractMaze(frame, cv2_version)
@@ -256,15 +263,22 @@ def mazeSolver_Phase1(frame, cv2_version, grid_size):
                         {'tag': 'start','lower':[1,56,0],  'upper':[8, 255, 180]},
                         {'tag': 'ball', 'lower':[0,0,215], 'upper':[255,255,255]},
                     ]
-    coord = detectMark(maze_frame, list_of_bounds, cv2_version)
+    feature_coord = detectMark(maze_frame, list_of_bounds, cv2_version)
     #print(coord)
 
     #create 2D binarized array of maze (1-> path, 0->obstacle)
-    maze, start, end  = mapMaze_Array(maze_frame, coord, grid_size)
-    # print(maze_array)
-
-    debugWindowShow()
-    return  maze, start, end
+    All_tags_exist = True
+    for feature in list_of_bounds:
+        if feature['tag'] not in feature_coord:
+            All_tags_exist = False
+            print('[ERR] UNABLE to find feature::', feature['tag'])
+    maze = []
+    start = []
+    end = []
+    if All_tags_exist:
+        maze, start, end  = mapMaze_Array(maze_frame, feature_coord, grid_size)
+        
+    return  maze, start, end, maze_frame
 
 def detectBall(frame_out, frame_gray):
     # detect circles in the image
@@ -285,7 +299,7 @@ def detectBall(frame_out, frame_gray):
         # cv2.imshow("output", imageScale(np.hstack([frame, output]),scale))
 
 def init_webCam():
-    cam = cv2.VideoCapture(1)
+    cam = cv2.VideoCapture(0)
     if not cam.isOpened():
         raise IOError("Cannot open webcam")
     return cam
@@ -321,50 +335,44 @@ def main():
     # MODE = "CALIBRATION_HSV"
     # MODE = "TESTING_RUN"
     MODE = "TESTING_STATIC"
-
+    RUNONCE = True
+    GRID_SIZE = 80
     ##### FOR TESTING RUN_TIME ######
-    if "TESTING_RUN" == MODE:
-        cam = init_webCam()
+    if "TESTING_RUN" == MODE or "TESTING_STATIC" == MODE:
+        cam = []
+        if "TESTING_RUN" == MODE:
+            cam = init_webCam()
         while True:
-            frame = grab_webCam_feed(cam, mirror=True)
-            mazeSolver_Phase1(frame, CV2_VERSION)
-            debugWindowShow()
-            if cv2.waitKey(1) == 27:
-                break  # esc to quit
-        cam.release() # kill camera
-
-    ##### FOR TESTING STATIC ######
-    elif "TESTING_STATIC" == MODE:
-        while True:
-            test_frame = cv2.imread('test1.png')
-            # mirror the image
-            test_frame = cv2.flip(test_frame, 0)
-            # extract maze bndry
-            maze, start, end = mazeSolver_Phase1(test_frame, CV2_VERSION, grid_size=80)
-            
-            # matrix = [
-            #     [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0],
-            #     [0, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0],
-            #     [0, 0, 1, 1, 1, 1, 0, 1, 0, 0, 0],
-            #     [0, 0, 1, 1, 1, 1, 0, 1, 0, 1, 0],
-            #     [0, 0, 0, 0, 0, 1, 0, 1, 0, 1, 0],
-            #     [0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0],
-            #     [0, 1, 1, 1, 0, 1, 1, 1, 0, 1, 0],
-            #     [0, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0],
-            #     [0, 0, 0, 1, 1, 1, 1, 1, 1, 1, 0],
-            #     [0, 1, 1, 1, 1, 1, 1, 1, 1, 1, 0],
-            #     [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]
-            # ]
-            # # coordinates as [x, y]
-            # start = [1, 7]
-            # end = [9, 3]
-            path = find_path(maze, start, end)
-            if len(path) == 0:
-                print('[ERR] No Path Found')
+            if "TESTING_RUN" == MODE:
+                frame = grab_webCam_feed(cam, mirror=True)
             else:
-                send_path(path)
+                frame = cv2.imread('test1.png')
+            # mirror the image
+            frame = cv2.flip(frame, 0)
+            # extract maze bndry
+            maze, start, end, maze_frame = mazeSolver_Phase1(frame, CV2_VERSION, GRID_SIZE)
+            if len(maze) == 0:
+                print('[ERR] UNABLE to recognize Maze')
+            else:
+                path = find_path(maze, start, end)
+                if len(path) == 0:
+                    print('[ERR] No Path Found')
+                else:
+                    paintPath(maze_frame, path, GRID_SIZE)
+                    send_path(path)
+
+            debugWindowShow()
+
+            if RUNONCE:
+                # HOLD till esc to quit
+                while True:
+                    if cv2.waitKey(1) == 27:
+                        break 
+                break
             if cv2.waitKey(1) == 27:
                 break  # esc to quit
+        if "TESTING_RUN" == MODE:
+            cam.release() # kill camera
 
     ##### FOR CALIBRATION ######
     elif "CALIBRATION_HSV" == MODE:
