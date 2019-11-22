@@ -20,10 +20,10 @@ def find_path(maze, start, end):
 def send_path(path):
     pathA = PathA()
     commands = pathA.getCommandMovementsFromPath(path, True)
-    # ser = serial.Serial()
-    # ser.port = '/dev/tty.usbmodem142303'
-    # ser.baudrate = 9600
-    # ser.open()
+    ser = serial.Serial()
+    ser.port = '/dev/tty.usbmodem145103'
+    ser.baudrate = 9600
+    ser.open()
 
     # matrix = [
     #     [0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0],
@@ -59,8 +59,8 @@ def send_path(path):
     cleaned_commands.append([commands[len(commands) - 1], count])
     cleaned_commands.append(['0', count])
     print(cleaned_commands)
-    # sendCommands(cleaned_commands, ser)
-    # ser.close()
+    sendCommands(cleaned_commands, ser)
+    ser.close()
 
 # main()
 '''
