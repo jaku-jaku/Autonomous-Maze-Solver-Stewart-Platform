@@ -341,7 +341,7 @@ def detectBall(frame_out, frame_gray):
         # cv2.imshow("output", imageScale(np.hstack([frame, output]),scale))
 
 def init_webCam():
-    cam = cv2.VideoCapture(1)
+    cam = cv2.VideoCapture(0)
     if not cam.isOpened():
         raise IOError("Cannot open webcam")
     return cam
@@ -374,8 +374,8 @@ def main():
     CV2_VERSION = cv2.__version__
     print('CV2 VERSION:' ,CV2_VERSION)
     ## MODE SELECTION ##
-    # MODE = "CALIBRATION_HSV"
-    MODE = "TESTING_RUN"
+    MODE = "CALIBRATION_HSV"
+    # MODE = "TESTING_RUN"
     # MODE = "TESTING_STATIC"
     RUNONCE = True
     GRID_SIZE_PERCENT = 0.06

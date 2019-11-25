@@ -19,9 +19,9 @@ def find_path(maze, start, end):
 
 def send_path(path):
     pathA = PathA()
-    commands = pathA.getCommandMovementsFromPath(path, True)
+    commands = pathA.getCommandMovementsFromPath(path, False)
     ser = serial.Serial()
-    ser.port = '/dev/tty.usbmodem145103'
+    ser.port = '/dev/tty.usbmodem142103'
     ser.baudrate = 9600
     ser.open()
 
@@ -53,7 +53,7 @@ def send_path(path):
             count += 0.2
         else: 
             cleaned_commands.append([commands[i], count])
-            count = 0.8
+            count = 0.4
             # cleaned_commands.append(['0', count])
         i += 1
     cleaned_commands.append([commands[len(commands) - 1], count])

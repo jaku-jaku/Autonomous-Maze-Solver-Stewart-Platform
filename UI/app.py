@@ -26,8 +26,8 @@ C - South_East - 7
 Z - South_West - 8
 
 COMMANDS TO REPRODUCE BUG
-WEST, SOUTH, WEST, WEST, NORTH WEST, NORTH WEST, NORTH, EAST, SOUTH, MOTOR 6
-11, -5, 11, 28, 28, 16, -11, -16,
+WEST, SOUTH, WEST, WEST, NORTH WEST, NORTH WEST, NORTH, EAST, SOUTH, MOTOR 
+6, 11, -5, 11, 28, 28, 16, -11, -16,
 '''
 
 direction_cases = {
@@ -42,7 +42,7 @@ direction_cases = {
     'Z': '8',
 }
 
-ser = serial.Serial('/dev/tty.usbmodem141203', 9600)
+ser = serial.Serial('/dev/tty.usbmodem141303', 9600)
 
 print("Welcome to the Automagic Maze secret control panel. Here, you can control the platform with special commands")
 print("WASD")
