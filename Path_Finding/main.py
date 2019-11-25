@@ -6,6 +6,7 @@ from imutils.perspective import four_point_transform
 from imutils import contours
 import imutils
 from app import *
+import sys, getopt
 
 ENABLE_DEBUG = 1
 ENABLE_GRID  = 1
@@ -179,8 +180,12 @@ def extractMaze(frame, cv2_version):
             cv2.drawContours(frame, displayCnt, -1, (0,255,255), 3)
             debugWindowAppend('approx', frame)
             break
-
-    maze_extracted = four_point_transform(frame, displayCnt.reshape(4, 2))
+    
+    try:
+        maze_extracted = four_point_transform(frame, displayCnt.reshape(4, 2))
+    except:
+        print("[ERROR] UNABLE TO PERFORM 4 PT TRANSFORM") 
+        return None
     debugWindowAppend('maze_extracted', maze_extracted)
     return maze_extracted
 
@@ -292,34 +297,38 @@ def paintPath(maze_frame, path, grid_size, color=(0,255,0)):
 def mazeSolver_Phase1(frame, cv2_version, grid_size_percent):
     #maze extraction from captured image
     maze_frame = extractMaze(frame, cv2_version)
-    maze_dim = maze_frame.shape
-    grid_size = int(max(maze_dim)*grid_size_percent)
-    print('maze_dimension: ', maze_dim, ' - grid size', grid_size)
+    if maze_frame is not None:
+        maze_dim = maze_frame.shape
+        grid_size = int(max(maze_dim)*grid_size_percent)
+        print('maze_dimension: ', maze_dim, ' - grid size', grid_size)
 
-    # marker detection
-    list_of_bounds =[   {'tag': 'end', 'lower':[30,46,6], 'upper':[69,224,137], 'minArea':1000},
-                        {'tag': 'start','lower':[0,106,0],  'upper':[15, 255, 255], 'minArea':1000},
-                        {'tag': 'ball', 'lower':[0,0,215], 'upper':[255,255,255], 'minArea':1000},
-                    ]
-    feature_coord, feature_mask = detectMark(maze_frame, list_of_bounds, cv2_version)
-    #print(coord)
+        # marker detection
+        list_of_bounds =[   {'tag': 'end', 'lower':[41,0,93], 'upper':[106,255,150], 'minArea':1000},
+                            {'tag': 'start','lower':[2,0,0],  'upper':[14, 255, 255], 'minArea':1000},
+                            {'tag': 'ball', 'lower':[0,0,230], 'upper':[255,255,255], 'minArea':1000},
+                        ]
+        feature_coord, feature_mask = detectMark(maze_frame, list_of_bounds, cv2_version)
+        #print(coord)
 
-    #create 2D binarized array of maze (1-> path, 0->obstacle)
-    All_tags_exist = True
-    for feature in list_of_bounds:
-        if feature['tag'] not in feature_coord:
-            All_tags_exist = False
-            print('[ERR] UNABLE to find feature::', feature['tag'])
-        else:
-            if feature_coord[feature['tag']][2] == -1:
+        #create 2D binarized array of maze (1-> path, 0->obstacle)
+        All_tags_exist = True
+        for feature in list_of_bounds:
+            if feature['tag'] not in feature_coord:
                 All_tags_exist = False
-                print('[ERR] Invalid feature::', feature['tag'], feature_coord[feature['tag']])
-    maze = []
-    start = []
-    end = []
-    ball = []
-    if All_tags_exist:
-        maze, start, end, ball = mapMaze_Array(maze_frame, feature_coord, feature_mask, grid_size)
+                print('[ERR] UNABLE to find feature::', feature['tag'])
+            else:
+                if feature_coord[feature['tag']][2] == -1:
+                    All_tags_exist = False
+                    print('[ERR] Invalid feature::', feature['tag'], feature_coord[feature['tag']])
+        maze = []
+        start = []
+        end = []
+        ball = []
+        if All_tags_exist:
+            maze, start, end, ball = mapMaze_Array(maze_frame, feature_coord, feature_mask, grid_size)
+    else:
+        print("[ERROR] mazeSolver_Phase1 - UNABLE TO EXTRACT MAZE FRAME")
+        return None, None, None, None, None, None
     return maze, start, end, ball, maze_frame, grid_size
 
 def detectBall(frame_out, frame_gray):
@@ -370,30 +379,64 @@ def obtainSlides(properties):
         vals.append(cv2.getTrackbarPos(prop,'calibrate_window'))
     return vals
 
-def main():
+def parseCML(argv):
+    # default
+    mode = "TESTING_STATIC" 
+    camera_live = False
+    # parsing
+    try:
+        opts, args = getopt.getopt(argv,"m:c:",["mode=","camera="])
+    except getopt.GetoptError:
+        print('main.py -m <mode:calib/static/run> -c <live>')
+        sys.exit(2)
+    for opt, arg in opts:
+        print(opt, arg)
+        if opt == '-h':
+            print('main.py -m <mode:calib/static/run> -c <live>')
+            sys.exit()
+        elif opt in ("-m", "--mode"):
+            mode = arg
+            # remap
+            if mode == 'calib':
+                mode = "CALIBRATION_HSV"
+            elif mode == 'static':
+                mode = "TESTING_STATIC"
+            else:
+                mode = "TESTING_RUN"
+                camera_live = True
+        elif opt in ("-c", "--camera"):
+            temp = arg
+            if arg == 'live':
+                camera_live = True
+
+    return mode, camera_live
+
+def main(argv):
+    MODE, CAM_LIVE = parseCML(argv)
     CV2_VERSION = cv2.__version__
     print('CV2 VERSION:' ,CV2_VERSION)
     ## MODE SELECTION ##
-    # MODE = "CALIBRATION_HSV"
-    MODE = "TESTING_RUN"
-    # MODE = "TESTING_STATIC"
     RUNONCE = True
     GRID_SIZE_PERCENT = 0.06
     ##### FOR TESTING RUN_TIME ######
+    print("--> Running", MODE)
+    cam = []
+    if CAM_LIVE:
+        cam = init_webCam()
+        frame = grab_webCam_feed(cam, mirror=False)
+        cv2.imwrite('last_run.png', frame)
+
     if "TESTING_RUN" == MODE or "TESTING_STATIC" == MODE:
-        cam = []
-        if "TESTING_RUN" == MODE:
-            cam = init_webCam()
-            frame = grab_webCam_feed(cam, mirror=True)
-            cv2.imwrite('chicken.png', frame)
-            # mirror the image
-            frame = cv2.flip(frame, 0)
         while True:
-            if "TESTING_STATIC" == MODE:
-                frame = cv2.imread('chicken.png')
+            if CAM_LIVE: #live feed
+                frame = grab_webCam_feed(cam, mirror=False)
+            else: # last run
+                frame = cv2.imread('last_run.png')
             # extract maze bndry
             maze, start, end, ball, maze_frame, grid_size = mazeSolver_Phase1(frame, CV2_VERSION, GRID_SIZE_PERCENT)
-            if len(maze) == 0:
+            if maze is None:
+                print('[ERR] UNABLE to recognize Maze')
+            elif len(maze) == 0:
                 print('[ERR] UNABLE to recognize Maze')
                 debugWindowShow()
             else:
@@ -410,15 +453,24 @@ def main():
                     debugWindowAppend('path1', path_frame1)
                     debugWindowAppend('path realtime', path_frame2)
                     debugWindowShow()
+                    IFRUN = False
                     while True:
                         if cv2.waitKey(1) ==  ord('g'):
-                            break 
-                    print("lets start")
-                    send_path(path_realTime)
+                            IFRUN = True
+                            print("--> lets start")
+                            break
+                        elif cv2.waitKey(1) ==  27:
+                            print("--> terminate")
+                            break
+                    if IFRUN:
+                        send_path(path_realTime)
+                    else:
+                        break
             if RUNONCE:
                 # HOLD till esc to quit
                 while True:
                     if cv2.waitKey(1) == 27:
+                        print("--> terminate")
                         break 
                 break
             if cv2.waitKey(1) == 27:
@@ -431,20 +483,25 @@ def main():
         SLIDE_NAME = ['HL', 'SL', 'VL', 'H', 'S', 'V']
         windowName = showUtilities(SLIDE_NAME)
         while True:
-            test_frame = cv2.imread('chicken.png')
+            if CAM_LIVE: #live feed
+                test_frame = grab_webCam_feed(cam, mirror=False)
+            else: # last run
+                test_frame = cv2.imread('last_run.png')
             # extract maze bndry
             maze_frame = extractMaze(test_frame, CV2_VERSION)
-            # marker runing
-            [Hl_val,Sl_val,Vl_val,H_val,S_val,V_val] = obtainSlides(SLIDE_NAME)
-            bound = [ {'tag':'DEBUG', 'lower':[Hl_val,Sl_val,Vl_val], 'upper':[H_val,S_val,V_val], 'minArea':0 } ]
-            coord = detectMark(maze_frame, bound, CV2_VERSION)
-            print(coord)
+            if maze_frame is not None:
+                # marker runing
+                [Hl_val,Sl_val,Vl_val,H_val,S_val,V_val] = obtainSlides(SLIDE_NAME)
+                bound = [ {'tag':'DEBUG', 'lower':[Hl_val,Sl_val,Vl_val], 'upper':[H_val,S_val,V_val], 'minArea':0 } ]
+                coord = detectMark(maze_frame, bound, CV2_VERSION)
+            # print(coord)
             debugWindowShow(windowName, scale=0.1)
             if cv2.waitKey(1) == 27:
                 break  # esc to quit
 
     cv2.destroyAllWindows() # close all windows
+    print("--> END <--")
 
 
 if __name__ == '__main__':
-    main()
+    main(sys.argv[1:])
