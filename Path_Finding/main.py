@@ -350,7 +350,7 @@ def detectBall(frame_out, frame_gray):
         # cv2.imshow("output", imageScale(np.hstack([frame, output]),scale))
 
 def init_webCam():
-    cam = cv2.VideoCapture(1)
+    cam = cv2.VideoCapture(0)
     if not cam.isOpened():
         raise IOError("Cannot open webcam")
     return cam
