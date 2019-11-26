@@ -11,7 +11,7 @@ import sys, getopt
 ENABLE_DEBUG = 1
 ENABLE_GRID  = 1
 
-ENABLE_DPRINT = 0
+ENABLE_DPRINT = 1
 ENABLE_EPRINT = 1
 ENABLE_SPRINT = 1
 
@@ -444,7 +444,8 @@ def main(argv):
         cv2.imwrite('last_run.png', frame)
 
     if "TESTING_RUN" == MODE or "TESTING_LOCAL" == MODE:
-        while True:
+        TERMINATE = False
+        while TERMINATE == False:
             if CAM_LIVE: #live feed
                 frame = grab_webCam_feed(cam, mirror=False)
             else: # last run
@@ -464,7 +465,7 @@ def main(argv):
                     debugWindowShow()
                 else:
                     SPRINT("--> PATH FOUND <-- ")
-                    SPRINT("  > Waiting for 'g' key to cmd, 'esc' to quit")
+                    SPRINT("  > Waiting for 'g' key to cmd, ' ' to abort, 'esc' to quit")
                     temp = maze_frame.copy()
                     temp2 = maze_frame.copy()
                     path_frame1 = paintPath(temp, path, grid_size)
@@ -478,15 +479,17 @@ def main(argv):
                             IFRUN = True
                             SPRINT("--> lets start")
                             break
-                        elif cv2.waitKey(1) ==  27:
+                        elif cv2.waitKey(1) ==  ord(' '): # esc to quit
+                            SPRINT("--> abort current path, rerun")
+                            break
+                        elif cv2.waitKey(1) ==  27: # esc to quit
                             SPRINT("--> terminate")
+                            TERMINATE = True
                             break
                     if IFRUN:
                         send_path(path_realTime)
-                    else:
-                        break
             if cv2.waitKey(1) == 27:
-                break  # esc to quit
+                TERMINATE = True  # esc to quit
 
     ##### FOR CALIBRATION ######
     elif "CALIBRATION_HSV" == MODE:
