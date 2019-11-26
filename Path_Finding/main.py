@@ -11,6 +11,20 @@ import sys, getopt
 ENABLE_DEBUG = 1
 ENABLE_GRID  = 1
 
+ENABLE_DPRINT = 0
+ENABLE_EPRINT = 1
+ENABLE_SPRINT = 1
+
+def SPRINT(*args):
+    if ENABLE_SPRINT:
+        print( "[SYS]  "+" ".join(map(str,args)))
+def DPRINT(*args):
+    if ENABLE_DPRINT:
+        print( "[DEBUG]"+" ".join(map(str,args)))
+def EPRINT(*args):
+    if ENABLE_EPRINT:
+        print( "[ERROR]"+" ".join(map(str,args)))
+
 def showImage(caption, image):
     if ENABLE_DEBUG:
         cv2.namedWindow(caption, cv2.WINDOW_NORMAL)
@@ -184,7 +198,7 @@ def extractMaze(frame, cv2_version):
     try:
         maze_extracted = four_point_transform(frame, displayCnt.reshape(4, 2))
     except:
-        print("[ERROR] UNABLE TO PERFORM 4 PT TRANSFORM") 
+        EPRINT("UNABLE TO PERFORM 4 PT TRANSFORM") 
         return None
     debugWindowAppend('maze_extracted', maze_extracted)
     return maze_extracted
@@ -300,7 +314,7 @@ def mazeSolver_Phase1(frame, cv2_version, grid_size_percent):
     if maze_frame is not None:
         maze_dim = maze_frame.shape
         grid_size = int(max(maze_dim)*grid_size_percent)
-        print('maze_dimension: ', maze_dim, ' - grid size', grid_size)
+        DPRINT('maze_dimension: ', maze_dim, ' - grid size', grid_size)
 
         # marker detection
         list_of_bounds =[   {'tag': 'end', 'lower':[41,0,93], 'upper':[106,255,150], 'minArea':1000},
@@ -315,11 +329,11 @@ def mazeSolver_Phase1(frame, cv2_version, grid_size_percent):
         for feature in list_of_bounds:
             if feature['tag'] not in feature_coord:
                 All_tags_exist = False
-                print('[ERROR] UNABLE to find feature::', feature['tag'])
+                EPRINT('UNABLE to find feature::', feature['tag'])
             else:
                 if feature_coord[feature['tag']][2] == -1:
                     All_tags_exist = False
-                    print('[ERROR] Invalid feature::', feature['tag'], feature_coord[feature['tag']])
+                    DPRINT('Invalid feature::', feature['tag'], feature_coord[feature['tag']])
         maze = []
         start = []
         end = []
@@ -327,7 +341,7 @@ def mazeSolver_Phase1(frame, cv2_version, grid_size_percent):
         if All_tags_exist:
             maze, start, end, ball = mapMaze_Array(maze_frame, feature_coord, feature_mask, grid_size)
     else:
-        print("[ERROR] mazeSolver_Phase1 - UNABLE TO EXTRACT MAZE FRAME")
+        EPRINT("mazeSolver_Phase1 - UNABLE TO EXTRACT MAZE FRAME")
         return None, None, None, None, None, None
     return maze, start, end, ball, maze_frame, grid_size
 
@@ -387,12 +401,11 @@ def parseCML(argv):
     try:
         opts, args = getopt.getopt(argv,"m:c:",["mode=","camera="])
     except getopt.GetoptError:
-        print('main.py -m <mode:calib/static/run> -c <live>')
+        SPRINT('main.py -m <mode:calib/static/run> -c <live>')
         sys.exit(2)
     for opt, arg in opts:
-        print(opt, arg)
         if opt == '-h':
-            print('PLEASE USE: main.py -m <mode:calib/static/run> -c <live>')
+            SPRINT('PLEASE USE: main.py -m <mode:calib/static/run> -c <live>')
             sys.exit()
         elif opt in ("-m", "--mode"):
             mode = arg
@@ -407,8 +420,8 @@ def parseCML(argv):
                 camera_live = True
             else:
                 mode = "UNDEFINED"
-                print("[ERROR] INVALID MODE")
-                print('PLEASE USE: main.py -m <mode:calib/static/run> -c <live>')
+                EPRINT("INVALID MODE")
+                SPRINT('PLEASE USE: main.py -m <mode:calib/static/run> -c <live>')
         elif opt in ("-c", "--camera"):
             temp = arg
             if arg == 'live':
@@ -419,12 +432,11 @@ def parseCML(argv):
 def main(argv):
     MODE, CAM_LIVE = parseCML(argv)
     CV2_VERSION = cv2.__version__
-    print('CV2 VERSION:' ,CV2_VERSION)
+    SPRINT('CV2 VERSION:' ,CV2_VERSION)
     ## MODE SELECTION ##
-    RUNONCE = True
     GRID_SIZE_PERCENT = 0.06
     ##### FOR TESTING RUN_TIME ######
-    print("--> Running", MODE)
+    SPRINT("--> Running", MODE)
     cam = []
     if CAM_LIVE:
         cam = init_webCam()
@@ -440,17 +452,19 @@ def main(argv):
             # extract maze bndry
             maze, start, end, ball, maze_frame, grid_size = mazeSolver_Phase1(frame, CV2_VERSION, GRID_SIZE_PERCENT)
             if maze is None:
-                print('[ERROR] UNABLE to recognize Maze')
+                EPRINT('UNABLE to recognize Maze')
             elif len(maze) == 0:
-                print('[ERROR] UNABLE to recognize Maze')
+                EPRINT('UNABLE to recognize Maze')
                 debugWindowShow()
             else:
                 path = find_path(maze, start, end)
                 path_realTime = find_path(maze, ball, end)
                 if len(path) == 0:
-                    print('[ERROR] No Path Found')
+                    EPRINT('No Path Found')
                     debugWindowShow()
                 else:
+                    SPRINT("--> PATH FOUND <-- ")
+                    SPRINT("  > Waiting for 'g' key to cmd, 'esc' to quit")
                     temp = maze_frame.copy()
                     temp2 = maze_frame.copy()
                     path_frame1 = paintPath(temp, path, grid_size)
@@ -462,26 +476,17 @@ def main(argv):
                     while True:
                         if cv2.waitKey(1) ==  ord('g'):
                             IFRUN = True
-                            print("--> lets start")
+                            SPRINT("--> lets start")
                             break
                         elif cv2.waitKey(1) ==  27:
-                            print("--> terminate")
+                            SPRINT("--> terminate")
                             break
                     if IFRUN:
                         send_path(path_realTime)
                     else:
                         break
-            if RUNONCE:
-                # HOLD till esc to quit
-                while True:
-                    if cv2.waitKey(1) == 27:
-                        print("--> terminate")
-                        break 
-                break
             if cv2.waitKey(1) == 27:
                 break  # esc to quit
-        if "TESTING_RUN" == MODE:
-            cam.release() # kill camera
 
     ##### FOR CALIBRATION ######
     elif "CALIBRATION_HSV" == MODE:
@@ -504,8 +509,10 @@ def main(argv):
             if cv2.waitKey(1) == 27:
                 break  # esc to quit
 
+    if CAM_LIVE:
+        cam.release() # kill camera
     cv2.destroyAllWindows() # close all windows
-    print("--> END <--")
+    SPRINT("--> END <--")
 
 
 if __name__ == '__main__':
