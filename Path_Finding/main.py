@@ -17,13 +17,13 @@ ENABLE_SPRINT = 1
 
 def SPRINT(*args):
     if ENABLE_SPRINT:
-        print( "[SYS]  "+" ".join(map(str,args)))
+        print( "[SYS]   "+" ".join(map(str,args)))
 def DPRINT(*args):
     if ENABLE_DPRINT:
-        print( "[DEBUG]"+" ".join(map(str,args)))
+        print( "[DEBUG] "+" ".join(map(str,args)))
 def EPRINT(*args):
     if ENABLE_EPRINT:
-        print( "[ERROR]"+" ".join(map(str,args)))
+        print( "[ERROR] --x "+" ".join(map(str,args)))
 
 def save_frame(tag, frame, private_index_list, counting=False):
     if counting:
@@ -449,7 +449,7 @@ def main(argv):
     SPRINT("--> Running", MODE)
     cam = []
     private_index_list = {'begin':0, 'maze':0, 'manual':0}
-    STATIC_IMG_SRC = 'img/frame_maze.png'
+    STATIC_IMG_SRC = 'img/frame_maze_1.png'
     if CAM_LIVE:
         cam = init_webCam()
         frame = grab_webCam_feed(cam, mirror=False)
@@ -461,7 +461,13 @@ def main(argv):
             if CAM_LIVE: #live feed
                 frame = grab_webCam_feed(cam, mirror=False)
             else: # last run
-                frame = cv2.imread(STATIC_IMG_SRC)
+                try:
+                    frame = cv2.imread(STATIC_IMG_SRC)
+                    if frame is None:
+                        EPRINT('NO image available at the src')
+                        break
+                except:
+                    EPRINT('FAIL to read')
             # extract maze bndry
             maze, start, end, ball, maze_frame, grid_size = mazeSolver_Phase1(frame, CV2_VERSION, GRID_SIZE_PERCENT)
             if maze is None:
@@ -518,7 +524,13 @@ def main(argv):
             if CAM_LIVE: #live feed
                 test_frame = grab_webCam_feed(cam, mirror=False)
             else: # last run
-                test_frame = cv2.imread(STATIC_IMG_SRC)
+                try:
+                    frame = cv2.imread(STATIC_IMG_SRC)
+                    if frame is None:
+                        EPRINT('NO image available at the src')
+                        break
+                except:
+                    EPRINT('FAIL to read')
             # extract maze bndry
             maze_frame = extractMaze(test_frame, CV2_VERSION)
             if maze_frame is not None:
