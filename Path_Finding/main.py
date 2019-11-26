@@ -25,6 +25,16 @@ def EPRINT(*args):
     if ENABLE_EPRINT:
         print( "[ERROR]"+" ".join(map(str,args)))
 
+def save_frame(tag, frame, private_index_list, counting=False):
+    if counting:
+        private_index_list[tag] = private_index_list[tag]+1
+        path = 'img/frame_'+tag+'_'+str(private_index_list[tag])+'.png'
+    else:
+        path = 'img/frame_'+tag+'.png'
+    cv2.imwrite(path, frame)
+    SPRINT("--> Image saved ", path)
+    
+
 def showImage(caption, image):
     if ENABLE_DEBUG:
         cv2.namedWindow(caption, cv2.WINDOW_NORMAL)
@@ -438,10 +448,11 @@ def main(argv):
     ##### FOR TESTING RUN_TIME ######
     SPRINT("--> Running", MODE)
     cam = []
+    private_index_list = {'begin':0, 'maze':0, 'manual':0}
     if CAM_LIVE:
         cam = init_webCam()
         frame = grab_webCam_feed(cam, mirror=False)
-        cv2.imwrite('last_run.png', frame)
+        save_frame('begin', frame, private_index_list)
 
     if "TESTING_RUN" == MODE or "TESTING_LOCAL" == MODE:
         TERMINATE = False
@@ -449,7 +460,7 @@ def main(argv):
             if CAM_LIVE: #live feed
                 frame = grab_webCam_feed(cam, mirror=False)
             else: # last run
-                frame = cv2.imread('last_run.png')
+                frame = cv2.imread('img/frame_maze.png')
             # extract maze bndry
             maze, start, end, ball, maze_frame, grid_size = mazeSolver_Phase1(frame, CV2_VERSION, GRID_SIZE_PERCENT)
             if maze is None:
@@ -464,6 +475,8 @@ def main(argv):
                     EPRINT('No Path Found')
                     debugWindowShow()
                 else:
+                    # save this working frame
+                    save_frame('maze', frame, private_index_list, True)
                     SPRINT("--> PATH FOUND <-- ")
                     SPRINT("  > Waiting for 'g' key to cmd, ' ' to abort, 'esc' to quit")
                     temp = maze_frame.copy()
@@ -475,20 +488,25 @@ def main(argv):
                     debugWindowShow()
                     IFRUN = False
                     while True:
-                        if cv2.waitKey(1) ==  ord('g'):
+                        key = cv2.waitKey(1)
+                        if key ==  ord('g'):
                             IFRUN = True
                             SPRINT("--> lets start")
                             break
-                        elif cv2.waitKey(1) ==  ord(' '): # esc to quit
+                        elif key ==  ord(' '): # esc to quit
                             SPRINT("--> abort current path, rerun")
                             break
-                        elif cv2.waitKey(1) ==  27: # esc to quit
+                        elif key ==  27 or key == ord('q'): # esc to quit
                             SPRINT("--> terminate")
                             TERMINATE = True
                             break
                     if IFRUN:
                         send_path(path_realTime)
-            if cv2.waitKey(1) == 27:
+            key = cv2.waitKey(1)
+            if key == ord('s'):
+                save_frame('manual', frame, private_index_list, True)
+            if key == 27 or key == ord('q'):
+                SPRINT("--> terminate")
                 TERMINATE = True  # esc to quit
 
     ##### FOR CALIBRATION ######
@@ -499,7 +517,7 @@ def main(argv):
             if CAM_LIVE: #live feed
                 test_frame = grab_webCam_feed(cam, mirror=False)
             else: # last run
-                test_frame = cv2.imread('last_run.png')
+                test_frame = cv2.imread('img/frame_maze.png')
             # extract maze bndry
             maze_frame = extractMaze(test_frame, CV2_VERSION)
             if maze_frame is not None:
