@@ -6,7 +6,7 @@ from pathfinding.finder.a_star import AStarFinder
     PathA:  analyse image once
             run A* and get path
             generate commands and send via serial port
-    
+
     '0': 'N' : '1'
     '22.5': 'NNE': 'a'
     '45': 'NE': '5'
@@ -52,14 +52,15 @@ class PathA:
             '337.5': 'h',
         }
 
-        for angle, direction in cardinal_commands.items():
-            lower_bound = angle - deviation
+        for cardinal_angle, direction in cardinal_commands.items():
+            cardinal_angle = float(cardinal_angle)
+            lower_bound = cardinal_angle - deviation
+            upper_bound = cardinal_angle + deviation
             if lower_bound < 0 :
                 lower_bound = 360 + lower_bound
-            upper_bound = angle + deviation
             if upper_bound >= 360 :
                 upper_bound = upper_bound - 360
-            if lower_bound <= angle <= upper_bound :
+            if lower_bound <= true_angle <= upper_bound :
                 return direction
         return
 
@@ -113,5 +114,3 @@ class PathA:
 class PathB:
     def __init__(self):
         pass
-
-

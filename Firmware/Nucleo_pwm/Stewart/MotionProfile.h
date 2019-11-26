@@ -14,7 +14,7 @@ namespace COMPASS_MOTION{
         DIRECTION_NW,
         DIRECTION_SE,
         DIRECTION_SW,
-        TOTAL_NUM_DIRECTIONS
+        TOTAL_NUM_DIRECTIONS = 17
     } direction_E;
 
     // STEP 2: Enter these based on the offline computation

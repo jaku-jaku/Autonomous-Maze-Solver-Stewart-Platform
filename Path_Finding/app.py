@@ -17,21 +17,22 @@ def find_path(maze, start, end):
     pathA = PathA()
     return pathA.getPath(maze, start, end)
 
-def send_path(path):
+def send_path(path, angle_offset):
     pathA = PathA()
-    commands = pathA.getCommandMovementsFromPath(path, False)
+    print(type(angle_offset))
+    commands = pathA.getCommandMovementsFromPath(path, angle_offset)
     ser = serial.Serial()
-    ser.port = '/dev/tty.usbmodem142103'
+    ser.port = '/dev/tty.usbmodem143303'
     ser.baudrate = 9600
     ser.open()
-
+    print(commands)
     count = 0.3
     cleaned_commands = [['0', 2.5]]
     i = 0
     while (i + 1 < len(commands)):
         if commands[i] == commands[i+1]:
             count += 0.2
-        else: 
+        else:
             cleaned_commands.append([commands[i], count])
             count = 0.4
             # cleaned_commands.append(['0', count])
@@ -53,7 +54,7 @@ def send_path(path):
     C - South_East - 7
     Z - South_West - 8
 
-    path: [(1, 7), (1, 6), (2, 6), (3, 6), (3, 7), (3, 8), (4, 8), (5, 8), (6, 8), 
+    path: [(1, 7), (1, 6), (2, 6), (3, 6), (3, 7), (3, 8), (4, 8), (5, 8), (6, 8),
     (7, 8), (8, 8), (9, 8), (9, 7), (9, 6), (9, 5), (9, 4), (9, 3)]
     +-----------+
     |########  #|
@@ -68,7 +69,7 @@ def send_path(path):
     |#         #|
     |###########|
     +-----------+
-    
+
     Not-inverted
     [1, 2, 2, 4, 4, 2, 2, 2, 2, 2, 2, 1, 1, 1, 1, 1]
     [N, E, E, S, S, E, E, E, E, E, E, N, N, N, N, N]
