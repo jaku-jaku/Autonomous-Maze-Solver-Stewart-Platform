@@ -209,14 +209,22 @@ def extractMaze(frame, cv2_version):
     try:
         displayCnt_2D = displayCnt.reshape(4, 2)
         maze_extracted = four_point_transform(frame, displayCnt_2D )
+        print(displayCnt_2D)
+        X_LEN_THRESH = 100
+        corner_one = 0
+        corner_two = 1
+        if (abs(displayCnt_2D[corner_one][0] - displayCnt_2D[corner_one][0]) < X_LEN_THRESH ):
+            #if delta X LEN is less by X LEN-> vertical plane
+            corner_one = corner_one + 1
+            corner_two = corner_two + 1
 
-        delta_x_transform = displayCnt_2D[0][0] - displayCnt_2D[1][0]
-        delta_y_transform = displayCnt_2D[1][1] - displayCnt_2D[0][1]
+        delta_x_transform = displayCnt_2D[corner_one][0] - displayCnt_2D[corner_two][0]
+        delta_y_transform = displayCnt_2D[corner_two][1] - displayCnt_2D[corner_one][1]
         print(delta_x_transform)
         print(delta_y_transform)
-        angle = np.arcsin(delta_y_transform / delta_x_transform)
+        angle = np.arcsin(abs(delta_y_transform / delta_x_transform))
         print(angle)
-        if angle > 0:
+        if delta_y_transform > 0:
             print("pos")
         else:
             print("neg")
