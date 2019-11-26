@@ -17,12 +17,13 @@ def find_path(maze, start, end):
     pathA = PathA()
     return pathA.getPath(maze, start, end)
 
-def send_path(path, angle_offset):
+def send_path(path, tilt_angle):
+    print('Below is the tilt angle')
+    print(tilt_angle)
     pathA = PathA()
-    print(type(angle_offset))
-    commands = pathA.getCommandMovementsFromPath(path, angle_offset)
+    commands = pathA.getCommandMovementsFromPath(path, tilt_angle)
     ser = serial.Serial()
-    ser.port = '/dev/tty.usbmodem143303'
+    ser.port = '/dev/tty.usbmodem142403'
     ser.baudrate = 9600
     ser.open()
     print(commands)
@@ -35,7 +36,6 @@ def send_path(path, angle_offset):
         else:
             cleaned_commands.append([commands[i], count])
             count = 0.4
-            # cleaned_commands.append(['0', count])
         i += 1
     cleaned_commands.append([commands[len(commands) - 1], count])
     cleaned_commands.append(['0', count])

@@ -62,7 +62,7 @@ class PathA:
                 upper_bound = upper_bound - 360
             if lower_bound <= true_angle <= upper_bound :
                 return direction
-        return
+        return 0
 
     def getCommandMovementsFromPath(self, path_coor, offset):
         coor_len = len(path_coor)

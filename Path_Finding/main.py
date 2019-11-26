@@ -502,6 +502,10 @@ def main(argv):
                     EPRINT('FAIL to read')
             # extract maze bndry
             maze, start, end, ball, maze_frame, grid_size, tilt_angle = mazeSolver_Phase1(frame, CV2_VERSION, GRID_SIZE_PERCENT)
+<<<<<<< HEAD
+=======
+            tilt_angle = float(tilt_angle)
+>>>>>>> 59b5577610b99f9489f118c7308c8c8e8e35d7f6
             if maze is None:
                 EPRINT('UNABLE to recognize Maze')
             elif len(maze) == 0:
