@@ -176,6 +176,36 @@ def detectMark(frame, list_of_bounds, CV2_VERSION, scale = 0.1):
     debugWindowAppend('feature_mask', feature_mask)
     return coords, feature_mask
 
+def tiltDetection(maze2D, degreeTrue):
+    X_LEN_THRESH = 200
+    corner_one = 0
+    corner_two = 1
+    x_elem     = 0
+    y_elem     = 1
+
+    DPRINT(maze2D)
+    if (abs(maze2D[corner_one][x_elem] - maze2D[corner_two][x_elem]) < X_LEN_THRESH ):
+        #if delta X LEN is less by X LEN-> vertical plane
+        corner_one = corner_one + 1
+        corner_two = corner_two + 1
+
+    delta_x_transform = maze2D[corner_one][x_elem] - maze2D[corner_two][x_elem]
+    delta_y_transform = maze2D[corner_two][y_elem] - maze2D[corner_one][y_elem]
+    DPRINT(delta_x_transform)
+    DPRINT(delta_y_transform)
+    angle = np.arcsin(abs(delta_y_transform / delta_x_transform))
+    DPRINT(angle)
+
+    if delta_x_transform > 0:
+        #negative angle for CCW
+        angle = -1 * angle
+
+    if degreeTrue:
+        angle = math.degrees(angle)
+
+    DPRINT(angle)
+    return angle
+
 def extractMaze(frame, cv2_version):
     frame_cpy = copy.deepcopy(frame)
     # Gray image op
@@ -204,34 +234,13 @@ def extractMaze(frame, cv2_version):
             debugWindowAppend('approx', frame_cpy)
             break
     showImage("contour", frame_cpy)
-    print(displayCnt)
 
     try:
-        displayCnt_2D = displayCnt.reshape(4, 2)
-        maze_extracted = four_point_transform(frame, displayCnt_2D )
-        print(displayCnt_2D)
-        X_LEN_THRESH = 100
-        corner_one = 0
-        corner_two = 1
-        if (abs(displayCnt_2D[corner_one][0] - displayCnt_2D[corner_one][0]) < X_LEN_THRESH ):
-            #if delta X LEN is less by X LEN-> vertical plane
-            corner_one = corner_one + 1
-            corner_two = corner_two + 1
-
-        delta_x_transform = displayCnt_2D[corner_one][0] - displayCnt_2D[corner_two][0]
-        delta_y_transform = displayCnt_2D[corner_two][1] - displayCnt_2D[corner_one][1]
-        print(delta_x_transform)
-        print(delta_y_transform)
-        angle = np.arcsin(abs(delta_y_transform / delta_x_transform))
-        print(angle)
-        if delta_y_transform > 0:
-            print("pos")
-        else:
-            print("neg")
-
+        maze_extracted = four_point_transform(frame, displayCnt.reshape(4, 2))
     except:
         EPRINT("UNABLE TO PERFORM 4 PT TRANSFORM")
         return None
+    tiltDetection(displayCnt.reshape(4, 2), 1)
     debugWindowAppend('maze_extracted', maze_extracted)
     return maze_extracted
 
