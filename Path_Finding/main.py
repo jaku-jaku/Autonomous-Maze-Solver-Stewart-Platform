@@ -33,7 +33,7 @@ def save_frame(tag, frame, private_index_list, counting=False):
         path = 'img/frame_'+tag+'.png'
     cv2.imwrite(path, frame)
     SPRINT("--> Image saved ", path)
-    
+
 
 def showImage(caption, image):
     if ENABLE_DEBUG:
@@ -539,8 +539,8 @@ def main(argv):
                 test_frame = grab_webCam_feed(cam, mirror=False)
             else: # last run
                 try:
-                    frame = cv2.imread(STATIC_IMG_SRC)
-                    if frame is None:
+                    test_frame = cv2.imread(STATIC_IMG_SRC)
+                    if test_frame is None:
                         EPRINT('NO image available at the src')
                         break
                 except:
