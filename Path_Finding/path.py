@@ -6,14 +6,64 @@ from pathfinding.finder.a_star import AStarFinder
     PathA:  analyse image once
             run A* and get path
             generate commands and send via serial port
+    
+    '0': 'N' : '1'
+    '22.5': 'NNE': 'a'
+    '45': 'NE': '5'
+    '67.5': 'ENE': 'b',
+    '90': 'E': '2',
+    '112.5': 'ESE': 'c',
+    '135': 'SE': '6'
+    '157.5': 'SSE': 'd',
+    '180': 'S': '3',
+    '202.5': 'SSW': 'e',
+    '225': 'SW': '7'
+    '247.5': 'WSW': 'f',
+    '270': 'W': '4'
+    '292.5': 'WNW': 'g',
+    '315': 'NW': '8',
+    '337.5': 'NNW': 'h':
+
 '''
 
 class PathA:
     def __init__(self):
         pass
 
-    # For now, no diagonal movements
-    def getCommandMovementsFromPath(self, path_coor, invert):
+    def getNearestCardinal(self, angle, offset):
+        deviation = 12.25
+        true_angle = (angle + offset) % 360
+        cardinal_commands = {
+            '0': '1',
+            '22.5': 'a',
+            '45': '5',
+            '67.5': 'b',
+            '90': '2',
+            '112.5': 'c',
+            '135': '6',
+            '157.5': 'd',
+            '180': '3',
+            '202.5': 'e',
+            '225': '7',
+            '247.5': 'f',
+            '270': '4',
+            '292.5': 'g',
+            '315': '8',
+            '337.5': 'h',
+        }
+
+        for angle, direction in cardinal_commands.items():
+            lower_bound = angle - deviation
+            if lower_bound < 0 :
+                lower_bound = 360 + lower_bound
+            upper_bound = angle + deviation
+            if upper_bound >= 360 :
+                upper_bound = upper_bound - 360
+            if lower_bound <= angle <= upper_bound :
+                return direction
+        return
+
+    def getCommandMovementsFromPath(self, path_coor, offset):
         coor_len = len(path_coor)
         commands = []
         i = 0
@@ -25,25 +75,21 @@ class PathA:
             cur_col = cur_coor[0]
             next_row = next_coor[1]
             next_col = next_coor[0]
+            angle = 0
             if next_row < cur_row:
                 # move it to north
-                if invert:
-                    commands.append('4')
-                else:
-                    commands.append('1')
-                    pass
+                angle = 0
             elif next_row > cur_row:
                 # move it south
-                if invert:
-                    commands.append('1')
-                else:
-                    commands.append('4')
+                angle = 180
             elif next_col > cur_col:
                 # move it right
-                commands.append('2')
+                angle = 90
             elif cur_col > next_col:
                 # move it left
-                commands.append('3')
+                angle = 270
+            cardinal_direction = self.getNearestCardinal(angle, offset)
+            commands.append(cardinal_direction)
             i += 1
         return commands
 
@@ -57,7 +103,6 @@ class PathA:
 
         print(grid.grid_str(path=path, start=start, end=end))
         return path
-
 
 '''
     PathB:  analyse image once
