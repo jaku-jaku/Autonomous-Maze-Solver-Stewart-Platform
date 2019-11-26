@@ -449,6 +449,7 @@ def main(argv):
     SPRINT("--> Running", MODE)
     cam = []
     private_index_list = {'begin':0, 'maze':0, 'manual':0}
+    STATIC_IMG_SRC = 'img/frame_maze.png'
     if CAM_LIVE:
         cam = init_webCam()
         frame = grab_webCam_feed(cam, mirror=False)
@@ -460,7 +461,7 @@ def main(argv):
             if CAM_LIVE: #live feed
                 frame = grab_webCam_feed(cam, mirror=False)
             else: # last run
-                frame = cv2.imread('img/frame_maze.png')
+                frame = cv2.imread(STATIC_IMG_SRC)
             # extract maze bndry
             maze, start, end, ball, maze_frame, grid_size = mazeSolver_Phase1(frame, CV2_VERSION, GRID_SIZE_PERCENT)
             if maze is None:
@@ -517,7 +518,7 @@ def main(argv):
             if CAM_LIVE: #live feed
                 test_frame = grab_webCam_feed(cam, mirror=False)
             else: # last run
-                test_frame = cv2.imread('img/frame_maze.png')
+                test_frame = cv2.imread(STATIC_IMG_SRC)
             # extract maze bndry
             maze_frame = extractMaze(test_frame, CV2_VERSION)
             if maze_frame is not None:
