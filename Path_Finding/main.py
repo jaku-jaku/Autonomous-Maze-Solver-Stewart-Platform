@@ -392,7 +392,7 @@ def parseCML(argv):
     for opt, arg in opts:
         print(opt, arg)
         if opt == '-h':
-            print('main.py -m <mode:calib/static/run> -c <live>')
+            print('PLEASE USE: main.py -m <mode:calib/static/run> -c <live>')
             sys.exit()
         elif opt in ("-m", "--mode"):
             mode = arg
@@ -402,9 +402,13 @@ def parseCML(argv):
             elif mode == 'static':
                 mode = "TESTING_LOCAL"
                 camera_live = False
-            else:
+            elif mode == 'run':
                 mode = "TESTING_RUN"
                 camera_live = True
+            else:
+                mode = "UNDEFINED"
+                print("[ERROR] INVALID MODE")
+                print('PLEASE USE: main.py -m <mode:calib/static/run> -c <live>')
         elif opt in ("-c", "--camera"):
             temp = arg
             if arg == 'live':
