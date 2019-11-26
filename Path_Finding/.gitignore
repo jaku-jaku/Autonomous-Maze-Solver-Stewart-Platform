@@ -1,6 +1,10 @@
 <<<<<<< Updated upstream
+<<<<<<< Updated upstream
 img/*
 !img/frame_maze_1.png
+=======
+__pycache__/*
+>>>>>>> Stashed changes
 =======
 __pycache__/*
 >>>>>>> Stashed changes

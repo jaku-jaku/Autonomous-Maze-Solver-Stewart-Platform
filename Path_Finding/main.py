@@ -146,7 +146,7 @@ def detectMark(frame, list_of_bounds, CV2_VERSION, scale = 0.1):
             # compute the center of the contour
             M = cv2.moments(cnts[0])
             area = cv2.contourArea(cnts[0])
-            if area > mask['minArea']: 
+            if area > mask['minArea']:
                 cX = int(M["m10"] / M["m00"])
                 cY = int(M["m01"] / M["m00"])
                 clr = random_color()
@@ -189,9 +189,8 @@ def extractMaze(frame, cv2_version):
         _, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     else:
         contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    cnts = sorted(contours, key=cv2.contourArea, reverse=True)
-    cv2.drawContours(frame, contours, -1, (0,255,0), 3)
-    showImage("contour", frame)
+    cnts = sorted(contours, key=cv2.contourArea, reverse=True)[:3]
+    cv2.drawContours(frame_cpy, cnts, -1, (0,255,0), 3)
     displayCnt = None
 
     for c in cnts:
@@ -201,14 +200,29 @@ def extractMaze(frame, cv2_version):
 
     	if len(approx) == 4:
             displayCnt = approx
-            cv2.drawContours(frame, displayCnt, -1, (0,255,255), 3)
-            debugWindowAppend('approx', frame)
+            cv2.drawContours(frame_cpy, [approx], -1, (0,255,255), 3)
+            debugWindowAppend('approx', frame_cpy)
             break
-    
+    showImage("contour", frame_cpy)
+    print(displayCnt)
+
     try:
-        maze_extracted = four_point_transform(frame, displayCnt.reshape(4, 2))
+        displayCnt_2D = displayCnt.reshape(4, 2)
+        maze_extracted = four_point_transform(frame, displayCnt_2D )
+
+        delta_x_transform = displayCnt_2D[0][0] - displayCnt_2D[1][0]
+        delta_y_transform = displayCnt_2D[1][1] - displayCnt_2D[0][1]
+        print(delta_x_transform)
+        print(delta_y_transform)
+        angle = np.arcsin(delta_y_transform / delta_x_transform)
+        print(angle)
+        if angle > 0:
+            print("pos")
+        else:
+            print("neg")
+
     except:
-        EPRINT("UNABLE TO PERFORM 4 PT TRANSFORM") 
+        EPRINT("UNABLE TO PERFORM 4 PT TRANSFORM")
         return None
     debugWindowAppend('maze_extracted', maze_extracted)
     return maze_extracted
@@ -237,7 +251,7 @@ def mapMaze_Array(frame, feature_coord, feature_mask, grid_size):
 
     ret, thresh_maze = cv2.threshold(maze_gray_gauss, 65, 255, cv2.THRESH_BINARY_INV)
     debugWindowAppend('maze1', thresh_maze)
-    
+
     frame_hsv = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
     frame_hsv_gauss = cv2.GaussianBlur(frame_hsv,(5,5),cv2.BORDER_DEFAULT)
     # define range of color in HSV
@@ -289,7 +303,7 @@ def mapMaze_Array(frame, feature_coord, feature_mask, grid_size):
                 # path
                 map_array_1D.append(1)
         map_array.append(map_array_1D)
-    
+
     map_array[start_array[1]][start_array[0]] = 1
     map_array[end_array[1]][end_array[0]] = 1
     map_array[ball_array[1]][ball_array[0]] = 1
@@ -317,7 +331,7 @@ def paintPath(maze_frame, path, grid_size, color=(0,255,0)):
         cv2.rectangle(temp,(x , y),( x + grid_size, y + grid_size),color,-1)
     apply_overlay(maze_frame, temp, 0.4)
     return maze_frame
-  
+
 def mazeSolver_Phase1(frame, cv2_version, grid_size_percent):
     #maze extraction from captured image
     maze_frame = extractMaze(frame, cv2_version)
@@ -405,7 +419,7 @@ def obtainSlides(properties):
 
 def parseCML(argv):
     # default
-    mode = "TESTING_LOCAL" 
+    mode = "TESTING_LOCAL"
     camera_live = False
     # parsing
     try:
