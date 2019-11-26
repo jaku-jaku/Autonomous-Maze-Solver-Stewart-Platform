@@ -17,13 +17,23 @@ ENABLE_SPRINT = 1
 
 def SPRINT(*args):
     if ENABLE_SPRINT:
-        print( "[SYS]  "+" ".join(map(str,args)))
+        print( "[SYS]   "+" ".join(map(str,args)))
 def DPRINT(*args):
     if ENABLE_DPRINT:
-        print( "[DEBUG]"+" ".join(map(str,args)))
+        print( "[DEBUG] "+" ".join(map(str,args)))
 def EPRINT(*args):
     if ENABLE_EPRINT:
-        print( "[ERROR]"+" ".join(map(str,args)))
+        print( "[ERROR] --x "+" ".join(map(str,args)))
+
+def save_frame(tag, frame, private_index_list, counting=False):
+    if counting:
+        private_index_list[tag] = private_index_list[tag]+1
+        path = 'img/frame_'+tag+'_'+str(private_index_list[tag])+'.png'
+    else:
+        path = 'img/frame_'+tag+'.png'
+    cv2.imwrite(path, frame)
+    SPRINT("--> Image saved ", path)
+    
 
 def showImage(caption, image):
     if ENABLE_DEBUG:
@@ -136,7 +146,7 @@ def detectMark(frame, list_of_bounds, CV2_VERSION, scale = 0.1):
             # compute the center of the contour
             M = cv2.moments(cnts[0])
             area = cv2.contourArea(cnts[0])
-            if area > mask['minArea']:
+            if area > mask['minArea']: 
                 cX = int(M["m10"] / M["m00"])
                 cY = int(M["m01"] / M["m00"])
                 clr = random_color()
@@ -179,8 +189,9 @@ def extractMaze(frame, cv2_version):
         _, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     else:
         contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    cnts = sorted(contours, key=cv2.contourArea, reverse=True)[:3]
-    cv2.drawContours(frame_cpy, cnts, -1, (0,255,0), 3)
+    cnts = sorted(contours, key=cv2.contourArea, reverse=True)
+    cv2.drawContours(frame, contours, -1, (0,255,0), 3)
+    showImage("contour", frame)
     displayCnt = None
 
     for c in cnts:
@@ -190,27 +201,14 @@ def extractMaze(frame, cv2_version):
 
     	if len(approx) == 4:
             displayCnt = approx
-            cv2.drawContours(frame_cpy, [approx], -1, (0,255,255), 3)
-            debugWindowAppend('approx', frame_cpy)
+            cv2.drawContours(frame, displayCnt, -1, (0,255,255), 3)
+            debugWindowAppend('approx', frame)
             break
-    showImage("contour", frame_cpy)
-    print(displayCnt)
-
+    
     try:
-        displayCnt_2D = displayCnt.reshape(4, 2)
-        maze_extracted = four_point_transform(frame, displayCnt_2D )
-
-        delta_x_transform = displayCnt_2D[0][0] - displayCnt_2D[1][0]
-        delta_y_transform = displayCnt_2D[1][1] - displayCnt_2D[0][1]
-        angle = np.arcsin(delta_y_transform / delta_x_transform)
-        print(angle)
-        if angle > 0:
-            print("pos")
-        else:
-            print("neg")
-
+        maze_extracted = four_point_transform(frame, displayCnt.reshape(4, 2))
     except:
-        EPRINT("UNABLE TO PERFORM 4 PT TRANSFORM")
+        EPRINT("UNABLE TO PERFORM 4 PT TRANSFORM") 
         return None
     debugWindowAppend('maze_extracted', maze_extracted)
     return maze_extracted
@@ -239,7 +237,7 @@ def mapMaze_Array(frame, feature_coord, feature_mask, grid_size):
 
     ret, thresh_maze = cv2.threshold(maze_gray_gauss, 65, 255, cv2.THRESH_BINARY_INV)
     debugWindowAppend('maze1', thresh_maze)
-
+    
     frame_hsv = cv2.cvtColor(frame,cv2.COLOR_BGR2HSV)
     frame_hsv_gauss = cv2.GaussianBlur(frame_hsv,(5,5),cv2.BORDER_DEFAULT)
     # define range of color in HSV
@@ -291,7 +289,7 @@ def mapMaze_Array(frame, feature_coord, feature_mask, grid_size):
                 # path
                 map_array_1D.append(1)
         map_array.append(map_array_1D)
-
+    
     map_array[start_array[1]][start_array[0]] = 1
     map_array[end_array[1]][end_array[0]] = 1
     map_array[ball_array[1]][ball_array[0]] = 1
@@ -319,7 +317,7 @@ def paintPath(maze_frame, path, grid_size, color=(0,255,0)):
         cv2.rectangle(temp,(x , y),( x + grid_size, y + grid_size),color,-1)
     apply_overlay(maze_frame, temp, 0.4)
     return maze_frame
-
+  
 def mazeSolver_Phase1(frame, cv2_version, grid_size_percent):
     #maze extraction from captured image
     maze_frame = extractMaze(frame, cv2_version)
@@ -407,7 +405,7 @@ def obtainSlides(properties):
 
 def parseCML(argv):
     # default
-    mode = "TESTING_LOCAL"
+    mode = "TESTING_LOCAL" 
     camera_live = False
     # parsing
     try:
@@ -450,10 +448,12 @@ def main(argv):
     ##### FOR TESTING RUN_TIME ######
     SPRINT("--> Running", MODE)
     cam = []
+    private_index_list = {'begin':0, 'maze':0, 'manual':0}
+    STATIC_IMG_SRC = 'img/frame_maze_1.png'
     if CAM_LIVE:
         cam = init_webCam()
         frame = grab_webCam_feed(cam, mirror=False)
-        cv2.imwrite('last_run.png', frame)
+        save_frame('begin', frame, private_index_list)
 
     if "TESTING_RUN" == MODE or "TESTING_LOCAL" == MODE:
         TERMINATE = False
@@ -461,7 +461,13 @@ def main(argv):
             if CAM_LIVE: #live feed
                 frame = grab_webCam_feed(cam, mirror=False)
             else: # last run
-                frame = cv2.imread('last_run.png')
+                try:
+                    frame = cv2.imread(STATIC_IMG_SRC)
+                    if frame is None:
+                        EPRINT('NO image available at the src')
+                        break
+                except:
+                    EPRINT('FAIL to read')
             # extract maze bndry
             maze, start, end, ball, maze_frame, grid_size = mazeSolver_Phase1(frame, CV2_VERSION, GRID_SIZE_PERCENT)
             if maze is None:
@@ -476,6 +482,8 @@ def main(argv):
                     EPRINT('No Path Found')
                     debugWindowShow()
                 else:
+                    # save this working frame
+                    save_frame('maze', frame, private_index_list, True)
                     SPRINT("--> PATH FOUND <-- ")
                     SPRINT("  > Waiting for 'g' key to cmd, ' ' to abort, 'esc' to quit")
                     temp = maze_frame.copy()
@@ -487,20 +495,25 @@ def main(argv):
                     debugWindowShow()
                     IFRUN = False
                     while True:
-                        if cv2.waitKey(1) ==  ord('g'):
+                        key = cv2.waitKey(1)
+                        if key ==  ord('g'):
                             IFRUN = True
                             SPRINT("--> lets start")
                             break
-                        elif cv2.waitKey(1) ==  ord(' '): # esc to quit
+                        elif key ==  ord(' '): # esc to quit
                             SPRINT("--> abort current path, rerun")
                             break
-                        elif cv2.waitKey(1) ==  27: # esc to quit
+                        elif key ==  27 or key == ord('q'): # esc to quit
                             SPRINT("--> terminate")
                             TERMINATE = True
                             break
                     if IFRUN:
                         send_path(path_realTime)
-            if cv2.waitKey(1) == 27:
+            key = cv2.waitKey(1)
+            if key == ord('s'):
+                save_frame('manual', frame, private_index_list, True)
+            if key == 27 or key == ord('q'):
+                SPRINT("--> terminate")
                 TERMINATE = True  # esc to quit
 
     ##### FOR CALIBRATION ######
@@ -511,7 +524,13 @@ def main(argv):
             if CAM_LIVE: #live feed
                 test_frame = grab_webCam_feed(cam, mirror=False)
             else: # last run
-                test_frame = cv2.imread('last_run.png')
+                try:
+                    frame = cv2.imread(STATIC_IMG_SRC)
+                    if frame is None:
+                        EPRINT('NO image available at the src')
+                        break
+                except:
+                    EPRINT('FAIL to read')
             # extract maze bndry
             maze_frame = extractMaze(test_frame, CV2_VERSION)
             if maze_frame is not None:
