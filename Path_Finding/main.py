@@ -240,9 +240,10 @@ def extractMaze(frame, cv2_version):
     except:
         EPRINT("UNABLE TO PERFORM 4 PT TRANSFORM")
         return None
-    tiltDetection(displayCnt.reshape(4, 2), 1)
+
+    angle = tiltDetection(displayCnt.reshape(4, 2), 1)
     debugWindowAppend('maze_extracted', maze_extracted)
-    return maze_extracted
+    return maze_extracted, angle
 
 def grid_on(frame_grid, pixel_step_size):
     #assign grid to maze
@@ -351,7 +352,7 @@ def paintPath(maze_frame, path, grid_size, color=(0,255,0)):
 
 def mazeSolver_Phase1(frame, cv2_version, grid_size_percent):
     #maze extraction from captured image
-    maze_frame = extractMaze(frame, cv2_version)
+    maze_frame, tilt_angle = extractMaze(frame, cv2_version)
     if maze_frame is not None:
         maze_dim = maze_frame.shape
         grid_size = int(max(maze_dim)*grid_size_percent)
