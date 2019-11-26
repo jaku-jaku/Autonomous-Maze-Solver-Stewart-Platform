@@ -37,7 +37,7 @@ def main():
     pathA = PathA()
     # print(pathA.getCommandMovementsFromPath(pathA.getPath(matrix, start, end), True))
 
-    commands = pathA.getCommandMovementsFromPath(pathA.getPath(matrix, start, end), True)
+    commands = pathA.getCommandMovementsFromPath(pathA.getPath(matrix, start, end))
 
     count = 0.3
     # [4,2,2,1,1]
