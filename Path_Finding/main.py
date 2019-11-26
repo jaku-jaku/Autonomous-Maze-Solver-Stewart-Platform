@@ -193,7 +193,7 @@ def tiltDetection(maze2D, degreeTrue):
     delta_y_transform = maze2D[corner_two][y_elem] - maze2D[corner_one][y_elem]
     DPRINT(delta_x_transform)
     DPRINT(delta_y_transform)
-    angle = np.arcsin(abs(delta_y_transform / delta_x_transform))
+    angle = np.arctan(abs(delta_y_transform / delta_x_transform))
     DPRINT(angle)
 
     if delta_x_transform > 0:
@@ -385,7 +385,7 @@ def mazeSolver_Phase1(frame, cv2_version, grid_size_percent):
     else:
         EPRINT("mazeSolver_Phase1 - UNABLE TO EXTRACT MAZE FRAME")
         return None, None, None, None, None, None
-    return maze, start, end, ball, maze_frame, grid_size
+    return maze, start, end, ball, maze_frame, grid_size, tilt_angle
 
 def detectBall(frame_out, frame_gray):
     # detect circles in the image
@@ -501,7 +501,8 @@ def main(argv):
                 except:
                     EPRINT('FAIL to read')
             # extract maze bndry
-            maze, start, end, ball, maze_frame, grid_size = mazeSolver_Phase1(frame, CV2_VERSION, GRID_SIZE_PERCENT)
+            maze, start, end, ball, maze_frame, grid_size, tilt_angle = mazeSolver_Phase1(frame, CV2_VERSION, GRID_SIZE_PERCENT)
+            tilt_angle = float(tilt_angle)
             if maze is None:
                 EPRINT('UNABLE to recognize Maze')
             elif len(maze) == 0:
@@ -540,7 +541,7 @@ def main(argv):
                             TERMINATE = True
                             break
                     if IFRUN:
-                        send_path(path_realTime)
+                        send_path(path_realTime, tilt_angle)
             key = cv2.waitKey(1)
             if key == ord('s'):
                 save_frame('manual', frame, private_index_list, True)
