@@ -315,11 +315,11 @@ def mazeSolver_Phase1(frame, cv2_version, grid_size_percent):
         for feature in list_of_bounds:
             if feature['tag'] not in feature_coord:
                 All_tags_exist = False
-                print('[ERR] UNABLE to find feature::', feature['tag'])
+                print('[ERROR] UNABLE to find feature::', feature['tag'])
             else:
                 if feature_coord[feature['tag']][2] == -1:
                     All_tags_exist = False
-                    print('[ERR] Invalid feature::', feature['tag'], feature_coord[feature['tag']])
+                    print('[ERROR] Invalid feature::', feature['tag'], feature_coord[feature['tag']])
         maze = []
         start = []
         end = []
@@ -352,7 +352,7 @@ def detectBall(frame_out, frame_gray):
 def init_webCam():
     cam = cv2.VideoCapture(0)
     if not cam.isOpened():
-        raise IOError("Cannot open webcam")
+        raise IOError("[ERROR] Cannot open webcam")
     return cam
 
 def grab_webCam_feed(cam, mirror=False):
@@ -381,7 +381,7 @@ def obtainSlides(properties):
 
 def parseCML(argv):
     # default
-    mode = "TESTING_STATIC" 
+    mode = "TESTING_LOCAL" 
     camera_live = False
     # parsing
     try:
@@ -400,7 +400,8 @@ def parseCML(argv):
             if mode == 'calib':
                 mode = "CALIBRATION_HSV"
             elif mode == 'static':
-                mode = "TESTING_STATIC"
+                mode = "TESTING_LOCAL"
+                camera_live = False
             else:
                 mode = "TESTING_RUN"
                 camera_live = True
@@ -426,7 +427,7 @@ def main(argv):
         frame = grab_webCam_feed(cam, mirror=False)
         cv2.imwrite('last_run.png', frame)
 
-    if "TESTING_RUN" == MODE or "TESTING_STATIC" == MODE:
+    if "TESTING_RUN" == MODE or "TESTING_LOCAL" == MODE:
         while True:
             if CAM_LIVE: #live feed
                 frame = grab_webCam_feed(cam, mirror=False)
@@ -435,15 +436,15 @@ def main(argv):
             # extract maze bndry
             maze, start, end, ball, maze_frame, grid_size = mazeSolver_Phase1(frame, CV2_VERSION, GRID_SIZE_PERCENT)
             if maze is None:
-                print('[ERR] UNABLE to recognize Maze')
+                print('[ERROR] UNABLE to recognize Maze')
             elif len(maze) == 0:
-                print('[ERR] UNABLE to recognize Maze')
+                print('[ERROR] UNABLE to recognize Maze')
                 debugWindowShow()
             else:
                 path = find_path(maze, start, end)
                 path_realTime = find_path(maze, ball, end)
                 if len(path) == 0:
-                    print('[ERR] No Path Found')
+                    print('[ERROR] No Path Found')
                     debugWindowShow()
                 else:
                     temp = maze_frame.copy()
