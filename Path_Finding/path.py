@@ -30,8 +30,10 @@ class PathA:
         pass
 
     def getNearestCardinal(self, angle, offset):
-        deviation = 12.25
-        true_angle = (angle + offset) % 360
+        deviation = 11.25
+        true_angle = angle + offset + 90
+        if true_angle < 0 :
+            true_angle = 360 + true_angle
         cardinal_commands = {
             '0': 'b',
             '22.5': 'j',
@@ -50,18 +52,20 @@ class PathA:
             '315': 'g',
             '337.5': 'l',
         }
-
+        print('\nThis is the true angle: ', true_angle)
         for cardinal_angle, direction in cardinal_commands.items():
             cardinal_angle = float(cardinal_angle)
             lower_bound = cardinal_angle - deviation
             upper_bound = cardinal_angle + deviation
             if lower_bound < 0 :
-                lower_bound = 360 + lower_bound
+                lower_bound = 0
             if upper_bound >= 360 :
-                upper_bound = upper_bound - 360
-            if lower_bound <= true_angle <= upper_bound :
+                upper_bound = 360
+            print(lower_bound, upper_bound)
+            if lower_bound <= true_angle and true_angle <= upper_bound :
+                print('This is the true direction', direction)
                 return direction
-        return 0
+        return 'b'
 
     def getCommandMovementsFromPath(self, path_coor, offset):
         coor_len = len(path_coor)
@@ -83,10 +87,10 @@ class PathA:
                 # move it south
                 angle = 180
             elif next_col > cur_col:
-                # move it right
+                # move it east
                 angle = 90
             elif cur_col > next_col:
-                # move it left
+                # move it west
                 angle = 270
             cardinal_direction = self.getNearestCardinal(angle, offset)
             commands.append(cardinal_direction)

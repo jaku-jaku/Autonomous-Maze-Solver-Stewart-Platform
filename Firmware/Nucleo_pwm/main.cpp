@@ -99,18 +99,18 @@ const Servo::calib_params_t calibs[MAX_NUM_ACTUATORS] = {
     },
     {   // #6
         .max = {30  , 1800},
-        .def = {0   , 1400},
+        .def = {0   , 1350},
         .min = {-30 , 1000},
     },
 };
 
 // map pins properly
-Servo m_servos[MAX_NUM_ACTUATORS] = { Servo(D6, &calibs[0]),
-                                      Servo(D11, &calibs[1]),
-                                      Servo(D10, &calibs[2]),
-                                      Servo(D9, &calibs[3]),
-                                      Servo(D3, &calibs[4]),
-                                      Servo(D5, &calibs[5]) };
+Servo m_servos[MAX_NUM_ACTUATORS] = { Servo(D6, &calibs[0]), // checked - flip
+                                      Servo(D11, &calibs[1]), // checked - good
+                                      Servo(D10, &calibs[2]), // checked -- flip
+                                      Servo(D9, &calibs[3]), // checked -- good
+                                      Servo(D3, &calibs[4]), // checked - good
+                                      Servo(D5, &calibs[5]) }; // checked - flip
 Stewart m_platform(m_servos);
 
 //////// MAIN ////////////

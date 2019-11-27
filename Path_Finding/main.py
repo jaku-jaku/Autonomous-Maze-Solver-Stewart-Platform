@@ -219,7 +219,7 @@ def extractMaze(frame, cv2_version):
         _, contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
     else:
         contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    cnts = sorted(contours, key=cv2.contourArea, reverse=True)[:3]
+    cnts = sorted(contours, key=cv2.contourArea, reverse=True)[:5]
     cv2.drawContours(frame_cpy, cnts, -1, (0,255,0), 3)
     displayCnt = None
 
@@ -237,11 +237,11 @@ def extractMaze(frame, cv2_version):
 
     try:
         maze_extracted = four_point_transform(frame, displayCnt.reshape(4, 2))
+        angle = tiltDetection(displayCnt.reshape(4, 2), 1)
     except:
         EPRINT("UNABLE TO PERFORM 4 PT TRANSFORM")
-        return None
+        return None, 0
 
-    angle = tiltDetection(displayCnt.reshape(4, 2), 1)
     debugWindowAppend('maze_extracted', maze_extracted)
     return maze_extracted, angle
 
@@ -502,10 +502,9 @@ def main(argv):
                     EPRINT('FAIL to read')
             # extract maze bndry
             maze, start, end, ball, maze_frame, grid_size, tilt_angle = mazeSolver_Phase1(frame, CV2_VERSION, GRID_SIZE_PERCENT)
-<<<<<<< HEAD
-=======
+
             tilt_angle = float(tilt_angle)
->>>>>>> 59b5577610b99f9489f118c7308c8c8e8e35d7f6
+
             if maze is None:
                 EPRINT('UNABLE to recognize Maze')
             elif len(maze) == 0:
@@ -569,7 +568,7 @@ def main(argv):
                 except:
                     EPRINT('FAIL to read')
             # extract maze bndry
-            maze_frame = extractMaze(test_frame, CV2_VERSION)
+            maze_frame, tilt_angle = extractMaze(test_frame, CV2_VERSION)
             if maze_frame is not None:
                 # marker runing
                 [Hl_val,Sl_val,Vl_val,H_val,S_val,V_val] = obtainSlides(SLIDE_NAME)
