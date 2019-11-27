@@ -22,7 +22,7 @@ class Node:
     def printSelf(self):
         print(' <', self.x, self.y, self.walkable, [self.gCost, self.hCost, self.fCost], self.tag, self.rCost, self.Parent, '>')
     def get(self, tag):
-        dict_ = {'x':self.x, 'y':self.y, 'walkable':(0 if self.walkable else 1), 'hCost':self.hCost, 'gCost':self.gCost, 'fCost':self.fCost, 'rCost': self.rCost,'index':(self.x+self.y/10), 'tag':self.tag}
+        dict_ = {'x':self.x, 'y':self.y, 'walkable':(1 if self.walkable else 0), 'hCost':self.hCost, 'gCost':self.gCost, 'fCost':self.fCost, 'rCost': self.rCost,'index':(self.x+self.y/10), 'tag':self.tag}
         return dict_[tag]
     def copy(self):
         return Node(self.x, self.y, self.walkable, tag=self.tag, rCost=self.rCost)
@@ -142,6 +142,35 @@ class Astar:
     def printAll2D(self, objs, tag):
         for row in objs:
             self.printRow(row, tag)
+    
+    def printMaze(self, objs, path):
+        print("------ CUSTOM ASTAR ------")
+        j = 0
+        for row in objs:
+            row_txt = '|'
+            i = 0
+            for item in row:
+                if item.get('walkable'):
+                    markAsPath = False
+                    for x,y in path:
+                        if x == i and y == j:
+                            markAsPath = True
+                            break
+                    if item.get('tag') == 'START':
+                        row_txt = row_txt+'S'
+                    elif item.get('tag') == 'END':
+                        row_txt = row_txt+'E'
+                    elif markAsPath:
+                        row_txt = row_txt+'X'
+                    else:
+                        row_txt = row_txt+' '
+                else:
+                    row_txt = row_txt+'#'
+                i = i+1
+            j = j+1
+            row_txt = row_txt + '|'
+            print(row_txt)
+        print("------ CUSTOM ASTAR ------")
 
     def genMap(self, mapInput, sPos, ePos, PATH_VALUE = 0, heat_map = None):
         grid = []
@@ -170,7 +199,7 @@ if __name__ == '__main__':
             ]
     ASTAR = Astar()
     map_grid, sNode, eNode  = ASTAR.genMap(mapp, (1,1), (3,4))
-    ASTAR.printAll2D(map_grid, 'walkable')
+    ASTAR.printMaze(map_grid)
     sNode.printSelf()
     eNode.printSelf()
     print('--- RESULT ---')

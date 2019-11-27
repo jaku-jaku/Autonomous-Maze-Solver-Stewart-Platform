@@ -1,6 +1,6 @@
 from core import *
 from app import *
-from config import GRID_SIZE_PERCENT, GRADIENT_FACTOR, ANIMATION_FPS
+from config import GRID_SIZE_PERCENT, GRADIENT_FACTOR, ANIMATION_FPS, COLOR_STRIP
 # +------------------------------------------------------+
 # |######################################################|
 # |###################### MAIN ##########################|
@@ -36,7 +36,7 @@ def main(argv):
                 except:
                     EPRINT('FAIL to read')
             # extract maze bndry
-            maze, start, end, ball, maze_frame, grid_size, counter_map, tilt_angle = mazeSolver_Phase1(frame, CV2_VERSION, GRID_SIZE_PERCENT, GRADIENT_FACTOR)
+            maze, features_uv, maze_frame, grid_size, heat_map, tilt_angle = mazeSolver_Phase1(frame, CV2_VERSION, GRID_SIZE_PERCENT, GRADIENT_FACTOR)
             tilt_angle = float(tilt_angle)
             if maze is None:
                 EPRINT('UNABLE to recognize Maze')
@@ -44,61 +44,97 @@ def main(argv):
                 EPRINT('UNABLE to recognize Maze')
                 debugWindowRender()
             else:
-                path = find_path(maze, start, end)
-                path_realTime = find_path(maze, ball, start)
-                path_Custom = find_path(maze, start, end, heat_map=counter_map)
-                path_realTime_Custom = find_path(maze, ball, start, heat_map=counter_map)
-                if len(path) == 0:
-                    EPRINT('No Path Found')
-                    debugWindowRender()
+                START_TAG = 'ball'
+                if START_TAG not in features_uv or features_uv['ball'] is None:
+                    EPRINT(' Unable to find balls, abort path planning, continue searching ...')
                 else:
-                    # save this working frame
-                    save_frame('maze', frame, private_index_list, override=False)
-                    SPRINT("--> PATH FOUND <-- ")
-                    SPRINT("  > Waiting for 'g' key to cmd, ' ' to abort, 'esc' to quit")
-                    temp = maze_frame.copy()
-                    temp2 = maze_frame.copy()
-                    animation_frame = maze_frame.copy()
-                    path_frame1 = paintPath(temp, path, grid_size)
-                    path_frame2 = paintPath(temp2, path_realTime, grid_size, color=(255,125,125))
-                    path_frame1_cust = paintPath(temp, path_Custom, grid_size, color=(200,45,225))
-                    path_frame2_cust = paintPath(temp2, path_realTime_Custom, grid_size, color=(125,125,255))
-                    debugWindowAppend('path FIX', path_frame1)
-                    debugWindowAppend('path FIX opt', path_frame1_cust)
-                    debugWindowAppend('path RT', path_frame2)
-                    debugWindowAppend('path RT opt', path_frame2_cust)
-                    debugWindowAppend('path Selected', animation_frame)
-                    save_frame('debugWindow', debugWindowRender(), private_index_list, override=True)
-                    IFRUN = False
-                    selected_PATH = path_realTime_Custom
-                    index = 0
-                    while True:
-                        key = cv2.waitKey(1)
-                        if key ==  ord('g'):
-                            IFRUN = True
-                            SPRINT("--> lets start")
-                            break
-                        elif key ==  ord(' '): # esc to quit
-                            SPRINT("--> abort current path, rerun")
-                            break
-                        elif key ==  27 or key == ord('q'): # esc to quit
-                            SPRINT("--> terminate")
-                            TERMINATE = True
-                            break
-                        # animation
+                    ball = features_uv['ball']
+                    list_mark_tags = ['blue_mark', 'red_mark']
+                    path_dict = {}
+                    clr_i = 0
+                    for tag in list_mark_tags:
+                        if tag in features_uv and features_uv[tag] is not None:    
+                            path = find_path(maze, ball, features_uv[tag])
+                            path_optimized = find_path(maze, ball, features_uv[tag], heat_map=heat_map)
+                            path_dict.update({tag:{'norm':path, 'optimized':path_optimized, 'color':[COLOR_STRIP[clr_i*2], COLOR_STRIP[clr_i*2+1]]}})
+                            DPRINT('--> Path Found for:', tag)
+                        else:
+                            EPRINT('--X Unable to find:', tag)
+                        clr_i = clr_i+1
+
+                    if len(path_dict) == 0:
+                        EPRINT('No Path Found')
+                        debugWindowRender()
+                    else:
+                        # save this working frame
+                        save_frame('maze', frame, private_index_list, override=False)
+                        SPRINT("--> PATH FOUND <-- ")
+                        SPRINT("  > Waiting for 'g' key to cmd, ' ' to abort, 'esc' to quit")
+                        for tag in list_mark_tags:
+                            temp = maze_frame.copy()
+                            if tag in path_dict and path_dict[tag] is not None:
+                                temp = paintPath(temp, path_dict[tag]['norm'], grid_size, color=path_dict[tag]['color'][0])
+                                temp  = paintPath(temp, path_dict[tag]['optimized'], grid_size, color=path_dict[tag]['color'][1])
+                            debugWindowAppend(('path:'+tag), temp)
                         
-                        if getFPS_Timer('Animation'):
-                            factor = 5
-                            anim_frame = paintPath(animation_frame, selected_PATH[index:index+factor], grid_size, color=(125,125,255), alpha=1)
-                            debugWindowAppend('path Selected', anim_frame)
-                            debugWindowRender()
-                            index = index+factor
-                            if index >= len(selected_PATH):
-                                index = 0
-                                animation_frame = maze_frame.copy()
-                            
-                    if IFRUN:
-                        send_path(selected_PATH, tilt_angle)
+                        # save the debugwindow as well
+                        save_frame('debugWindow', debugWindowRender(), private_index_list, override=True)
+
+                        # Select path, and wait for sending
+                        animation_frame = maze_frame.copy()
+                        debugWindowAppend('path Selected', animation_frame)
+                        IFRUN = False
+                        selectionIndex = 0
+                        tick_index = 0
+                        while True:
+                            key = cv2.waitKey(1)
+                            if key ==  ord('g'):
+                                IFRUN = True
+                                SPRINT("--> lets start")
+                                break
+                            elif key == ord('f'): #<-
+                                selectionIndex = selectionIndex-1
+                                if selectionIndex < 0:
+                                    selectionIndex = len(list_mark_tags)*2-1
+                                tick_index = 0 
+                            elif key == ord('h'): #->
+                                selectionIndex = selectionIndex+1
+                                if selectionIndex >= len(list_mark_tags)*2:
+                                    selectionIndex = 0
+                                tick_index = 0 
+                            elif key ==  ord(' '): # esc to quit
+                                SPRINT("--> abort current path, rerun")
+                                break
+                            elif key ==  27 or key == ord('q'): # esc to quit
+                                SPRINT("--> terminate")
+                                TERMINATE = True
+                                break
+                            # animation
+                            selected_PATH_TAG = list_mark_tags[int(selectionIndex/2)]
+                            selected_PATH_CLR = (0,0,0)
+                            if selected_PATH_TAG in path_dict and path_dict[selected_PATH_TAG] is not None:
+                                if selectionIndex%2 == 0:
+                                    selected_PATH_CLR = path_dict[selected_PATH_TAG]['color'][1]
+                                    selected_PATH = path_dict[selected_PATH_TAG]['optimized']
+                                else:
+                                    selected_PATH_CLR = path_dict[selected_PATH_TAG]['color'][0]
+                                    selected_PATH = path_dict[selected_PATH_TAG]['norm']
+                                if getFPS_Timer('Animation'):
+                                    if tick_index == 0:
+                                        animation_frame = maze_frame.copy()
+                                    factor = 5
+                                    anim_frame = paintPath(animation_frame, selected_PATH[tick_index:tick_index+factor], grid_size, color=selected_PATH_CLR, alpha=1)
+                                    debugWindowAppend('path Selected', anim_frame)
+                                    debugWindowRender()
+                                    tick_index = tick_index+factor
+                                    if tick_index >= len(selected_PATH):
+                                        tick_index = 0
+                            else:
+                                EPRINT(' selected target was not recognized, abort --< ', selected_PATH_TAG)
+                                break
+                        if IFRUN:
+                            send_path(selected_PATH, tilt_angle)
+
             key = cv2.waitKey(1)
             if key == ord('s'):
                 save_frame('manual', frame, private_index_list, override=False)
