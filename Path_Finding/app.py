@@ -28,7 +28,7 @@ def send_path(path, tilt_angle):
     ser.open()
     print(commands)
     count = 0.3
-    cleaned_commands = [['0', 2.5]]
+    cleaned_commands = [['a', 2.5]]
     i = 0
     while (i + 1 < len(commands)):
         if commands[i] == commands[i+1]:
@@ -38,7 +38,7 @@ def send_path(path, tilt_angle):
             count = 0.4
         i += 1
     cleaned_commands.append([commands[len(commands) - 1], count])
-    cleaned_commands.append(['0', count])
+    cleaned_commands.append(['a', count])
     print(cleaned_commands)
     sendCommands(cleaned_commands, ser)
     ser.close()
