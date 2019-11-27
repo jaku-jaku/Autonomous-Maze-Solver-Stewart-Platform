@@ -221,15 +221,15 @@ def mapMaze_Array(frame, feature_coord, feature_mask, grid_size, ENABLE_GRID=Tru
     filter_maze_pixel_height = filtered_maze.shape[0]
     filter_maze_pixel_width  = filtered_maze.shape[1]
 
-    start_coord = feature_coord['start'][0:2]
-    end_coord   = feature_coord['end'][0:2]
-    ball_coord  = feature_coord['ball'][0:2]
+    features_uv_coord = {}
+    for item in feature_coord:
+        coord = feature_coord[item]
+        uv_coord = None
+        if len(coord) >= 2:
+            uv_coord = [ (math.floor(coord[0] /grid_size)) , (math.floor(coord[1] /grid_size)) ]
+        features_uv_coord.update({item:uv_coord})
+        
     map_array = []
-    start_array = [ (math.floor( start_coord[0] /grid_size)) , (math.floor(start_coord[1] /grid_size)) ]
-    end_array = [(math.floor( end_coord[0] /grid_size)) , (math.floor(end_coord[1] /grid_size))]
-    ball_array = [(math.floor( ball_coord[0] /grid_size)) , (math.floor(ball_coord[1] /grid_size))]
-
-
     for j in range(0, filter_maze_pixel_width, grid_size):
         map_array_1D = []
         for i in range(0, filter_maze_pixel_height, grid_size):
@@ -244,19 +244,17 @@ def mapMaze_Array(frame, feature_coord, feature_mask, grid_size, ENABLE_GRID=Tru
                 map_array_1D.append(1)
         map_array.append(map_array_1D)
 
-    map_array[start_array[1]][start_array[0]] = 1
-    map_array[end_array[1]][end_array[0]] = 1
-    map_array[ball_array[1]][ball_array[0]] = 1
+    # revive feature coords
+    for item in features_uv_coord:
+        uv_coord = features_uv_coord[item]
+        map_array[uv_coord[1]][uv_coord[0]] = 1
+        # highlight features
+        highlightMapCellAt(frame, uv_coord, grid_size, random_color())
 
     # highlight walls (visual)
     highlightMapCells(frame, map_array, grid_size,(0,125,255), mark_val=0)
 
-    # highlight start and end color fill (visual)
-    highlightMapCellAt(frame, start_array, grid_size, (0,0,255))
-    highlightMapCellAt(frame,   end_array, grid_size, (255,0,0))
-    highlightMapCellAt(frame,  ball_array, grid_size, (255,255,255))
-
-    return map_array, start_array, end_array, ball_array
+    return map_array, features_uv_coord
 
 def generateContour(maze, bndry):
     w = len(maze)
@@ -310,7 +308,7 @@ def mazeSolver_Phase1(frame, cv2_version, grid_size_percent, gradientFactor):
         end = []
         ball = []
         if All_tags_exist:
-            maze, start, end, ball = mapMaze_Array(maze_frame, feature_coord, feature_mask, grid_size)
+            maze, features_uv = mapMaze_Array(maze_frame, feature_coord, feature_mask, grid_size)
             if maze is not None:
                 cnt_mp = temp2
                 maze_contour = generateContour(maze, bndry=gradientFactor)
@@ -322,7 +320,7 @@ def mazeSolver_Phase1(frame, cv2_version, grid_size_percent, gradientFactor):
     else:
         EPRINT("mazeSolver_Phase1 - UNABLE TO EXTRACT MAZE FRAME")
         return None, None, None, None, None, None, None, None
-    return maze, start, end, ball, maze_frame, grid_size, maze_contour, tilt_angle
+    return maze, features_uv, maze_frame, grid_size, maze_contour, tilt_angle
 
 def pathOptimization(path, counter_map):
     new_path = []

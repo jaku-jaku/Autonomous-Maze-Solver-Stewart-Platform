@@ -12,10 +12,17 @@ def save_frame(tag, frame, private_index_list, override=False):
     cv2.imwrite(path, frame)
     SPRINT("--> Image saved ", path)
 
-def random_color():
-    rgbl=[255,30,200,40]
+def random_color(r=None,g=None,b=None):
+    rgbl=[255,30,200,40,123, 100, 80, 40, 0, 244]
     np.random.shuffle(rgbl)
-    return tuple(rgbl[0:3])
+    clr = rgbl[0:3]
+    if r is not None:
+        clr[0] = r
+    if g is not None:
+        clr[1] = g
+    if b is not None:
+        clr[2] = b
+    return tuple(clr)
 
 def apply_overlay(output, overlay, alpha):
     cv2.addWeighted(overlay, alpha, output, 1 - alpha, 0, output)

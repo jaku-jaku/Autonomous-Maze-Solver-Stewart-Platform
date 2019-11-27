@@ -18,12 +18,13 @@ def find_path(maze, start, end, heat_map = None):
         # run custom code here, for dual code support
         ASTAR = Astar(MAX_HEAT_MAP_VALUE=MAX_HEAT_MAP_VALUE, HEAT_MAP_WEIGHT=MAX_HEAT_MAP_WEIGHT)
         map_grid, sNode, eNode  = ASTAR.genMap(maze, start, end, PATH_VALUE=1, heat_map=heat_map)
-        ASTAR.printAll2D(map_grid, 'walkable')
         sNode.printSelf()
         eNode.printSelf()
         print('--- RESULT ---')
         path = ASTAR.findPath(map_grid, sNode, eNode, ALLOW_DIAG=False)
-        return ASTAR.extractPath(path)
+        pathArray = ASTAR.extractPath(path)
+        ASTAR.printMaze(map_grid, pathArray)
+        return pathArray
     else:
         print('Ima end these coordinates')
         print(start, end)
