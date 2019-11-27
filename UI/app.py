@@ -15,34 +15,15 @@ def getch():
         return ch
     return _getch()
 
-'''
-W - North - 1
-D - East - 2
-A - West - 3
-S - South - 4
-E - North_East - 5
-Q - North_West - 6
-C - South_East - 7
-Z - South_West - 8
-
-COMMANDS TO REPRODUCE BUG
-WEST, SOUTH, WEST, WEST, NORTH WEST, NORTH WEST, NORTH, EAST, SOUTH, MOTOR
-6, 11, -5, 11, 28, 28, 16, -11, -16,
-'''
-
 direction_cases = {
-    'P': '0',
-    'W': '1',
-    'D': '2',
-    'A': '3',
-    'S': '4',
-    'E': '5',
-    'Q': '6',
-    'C': '7',
-    'Z': '8',
+    'P': 'a',
+    'W': 'b',
+    'D': 'c',
+    'A': 'd',
+    'S': 'e',
 }
 
-ser = serial.Serial('/dev/tty.usbmodem143303', 9600)
+ser = serial.Serial('/dev/tty.usbmodem141403', 9600)
 
 print("Welcome to the Automagic Maze secret control panel. Here, you can control the platform with special commands")
 print("WASD")
@@ -52,11 +33,7 @@ print("Z to move to lower left corner")
 print("C to move to lower right corner\n")
 
 while True:
-    user_input = str(getch().upper())
-    direction = direction_cases.get(user_input, 'Invalid input')
-    if direction == "Invalid input":
-        print("{}: Please try again with a different command \n".format(direction))
-    else:
-        print("\nMoving in the direction of {}\n".format(direction))
-        if ser.is_open:
-            ser.write(direction.encode())
+    user_input = str(getch().lower())
+    print("\nMoving in the direction of {}\n".format(user_input))
+    if ser.is_open:
+        ser.write(user_input.encode())
