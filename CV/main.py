@@ -25,7 +25,7 @@ def random_color():
     np.random.shuffle(rgbl)
     return tuple(rgbl)
 
-def debugWindowShow(title='Debug_Window', scale = 0.15):
+def debugWindowRender(title='Debug_Window', scale = 0.15):
     if ENABLE_DEBUG:
         size = len(debug_window_dict)
         width = int(round(np.sqrt(size)))
@@ -261,7 +261,7 @@ def mazeSolver_Phase1(frame, cv2_version):
     maze_array = mapMaze_Array(maze_frame, coord)
     print(maze_array)
 
-    debugWindowShow()
+    debugWindowRender()
 
 def detectBall(frame_out, frame_gray):
     # detect circles in the image
@@ -325,7 +325,7 @@ def main():
         while True:
             frame = grab_webCam_feed(cam, mirror=True)
             mazeSolver_Phase1(frame, CV2_VERSION)
-            debugWindowShow()
+            debugWindowRender()
             if cv2.waitKey(1) == 27:
                 break  # esc to quit
         cam.release() # kill camera
@@ -354,7 +354,7 @@ def main():
             bound = [ {'tag':'DEBUG', 'lower':[Hl_val,Sl_val,Vl_val], 'upper':[H_val,S_val,V_val]} ]
             coord = detectMark(maze_frame, bound, CV2_VERSION)
             print(coord)
-            debugWindowShow(windowName, scale=0.1)
+            debugWindowRender(windowName, scale=0.1)
             if cv2.waitKey(1) == 27:
                 break  # esc to quit
 
