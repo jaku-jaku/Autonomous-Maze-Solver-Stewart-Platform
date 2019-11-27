@@ -3,7 +3,7 @@ import time
 
 from path import PathA
 from Astar import Astar
-from config import MAX_HEAT_MAP_VALUE, MAX_HEAT_MAP_WEIGHT
+from config import MAX_HEAT_MAP_VALUE, MAX_HEAT_MAP_WEIGHT, COUNT_DELAY, COUNT_DELAY_REPEAT
 
 def sendCommands(commands, ser):
     for command in commands:
@@ -39,15 +39,15 @@ def send_path(path, tilt_angle):
     ser.port = '/dev/tty.usbmodem141403'
     ser.baudrate = 9600
     ser.open()
-    count = 1
+    count = COUNT_DELAY
     cleaned_commands = [['a', 2]]
     i = 0
     while (i + 1 < len(commands)):
         if commands[i] == commands[i+1]:
-            count += 0.2
+            count += COUNT_DELAY_REPEAT
         else:
             cleaned_commands.append([commands[i], count])
-            count = 1
+            count = COUNT_DELAY
         i += 1
     cleaned_commands.append([commands[len(commands) - 1], count])
     cleaned_commands.append(['a', count])

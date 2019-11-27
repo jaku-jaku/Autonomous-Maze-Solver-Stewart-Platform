@@ -16,7 +16,11 @@ GRID_SIZE_PERCENT = 0.018
 
 
 # Feature
-FEATURE_TARGET =[   {'tag': 'end', 'lower':[41,0,93], 'upper':[106,255,150], 'minArea':1000, 'maskSize':60},
+FEATURE_TARGET =[   {'tag': 'end', 'lower':[41,0,93], 'upper':[106,255,150], 'minArea':1000, 'maskSize':50},
                     {'tag': 'start','lower':[2,0,0],  'upper':[14, 255, 255], 'minArea':1000, 'maskSize':60},
                     {'tag': 'ball', 'lower':[0,0,230], 'upper':[255,255,255], 'minArea':1000, 'maskSize':60},
                 ]
+
+# INTERFACE Config
+COUNT_DELAY = 0.08 #s
+COUNT_DELAY_REPEAT = 0.015 #0.01 #s

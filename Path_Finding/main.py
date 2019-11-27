@@ -45,9 +45,9 @@ def main(argv):
                 debugWindowRender()
             else:
                 path = find_path(maze, start, end)
-                path_realTime = find_path(maze, ball, end)
+                path_realTime = find_path(maze, ball, start)
                 path_Custom = find_path(maze, start, end, heat_map=counter_map)
-                path_realTime_Custom = find_path(maze, ball, end, heat_map=counter_map)
+                path_realTime_Custom = find_path(maze, ball, start, heat_map=counter_map)
                 if len(path) == 0:
                     EPRINT('No Path Found')
                     debugWindowRender()

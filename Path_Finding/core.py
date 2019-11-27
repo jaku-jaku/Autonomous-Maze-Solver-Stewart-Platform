@@ -155,8 +155,8 @@ def extractMaze(frame, cv2_version, FOCAL_DIST_TOL=0.7):
 
     if displayCnt is not None:
         try:
-        maze_extracted = four_point_transform(frame, displayCnt.reshape(4, 2))
-        angle = tiltDetection(displayCnt.reshape(4, 2), 1)
+            maze_extracted = four_point_transform(frame, displayCnt.reshape(4, 2))
+            angle = tiltDetection(displayCnt.reshape(4, 2), 1)
         except:
             EPRINT("ERROR TO PERFORM 4 PT TRANSFORM")
             return None, 0
