@@ -22,7 +22,7 @@ def main(argv):
         frame = grab_webCam_feed(cam, mirror=False)
         save_frame('begin', frame, private_index_list, override=True)
 
-    if "TESTING_RUN" == MODE or "TESTING_LOCAL" == MODE:
+    if "TESTING_RUN" == MODE or "TESTING_LOCAL" == MODE or "TESTING_LOOP" == MODE:
         TERMINATE = False
         while TERMINATE == False:
             if CAM_LIVE: #live feed
@@ -37,7 +37,8 @@ def main(argv):
                     EPRINT('FAIL to read')
             # extract maze bndry
             maze, features_uv, maze_frame, grid_size, heat_map, tilt_angle = mazeSolver_Phase1(frame, CV2_VERSION, GRID_SIZE_PERCENT, GRADIENT_FACTOR)
-            tilt_angle = float(tilt_angle)
+            if tilt_angle !=  None :
+                tilt_angle = float(tilt_angle)
             if maze is None:
                 EPRINT('UNABLE to recognize Maze')
             elif len(maze) == 0:
@@ -53,7 +54,7 @@ def main(argv):
                     path_dict = {}
                     clr_i = 0
                     for tag in list_mark_tags:
-                        if tag in features_uv and features_uv[tag] is not None:    
+                        if tag in features_uv and features_uv[tag] is not None:
                             path = find_path(maze, ball, features_uv[tag])
                             path_optimized = find_path(maze, ball, features_uv[tag], heat_map=heat_map)
                             path_dict.update({tag:{'norm':path, 'optimized':path_optimized, 'color':[COLOR_STRIP[clr_i*2], COLOR_STRIP[clr_i*2+1]]}})
@@ -76,7 +77,7 @@ def main(argv):
                                 temp = paintPath(temp, path_dict[tag]['norm'], grid_size, color=path_dict[tag]['color'][0])
                                 temp  = paintPath(temp, path_dict[tag]['optimized'], grid_size, color=path_dict[tag]['color'][1])
                             debugWindowAppend(('path:'+tag), temp)
-                        
+
                         # save the debugwindow as well
                         save_frame('debugWindow', debugWindowRender(), private_index_list, override=True)
 
@@ -86,6 +87,7 @@ def main(argv):
                         IFRUN = False
                         selectionIndex = 0
                         tick_index = 0
+                        DPRINT("Below is the path dictionary", path_dict)
                         while True:
                             key = cv2.waitKey(1)
                             if key ==  ord('g'):
@@ -96,12 +98,12 @@ def main(argv):
                                 selectionIndex = selectionIndex-1
                                 if selectionIndex < 0:
                                     selectionIndex = len(list_mark_tags)*2-1
-                                tick_index = 0 
+                                tick_index = 0
                             elif key == ord('h'): #->
                                 selectionIndex = selectionIndex+1
                                 if selectionIndex >= len(list_mark_tags)*2:
                                     selectionIndex = 0
-                                tick_index = 0 
+                                tick_index = 0
                             elif key ==  ord(' '): # esc to quit
                                 SPRINT("--> abort current path, rerun")
                                 break

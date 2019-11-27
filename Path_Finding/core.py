@@ -120,7 +120,7 @@ def extractMaze(frame, cv2_version, FOCAL_DIST_TOL=0.7):
         M = cv2.moments(c)
         x = (M["m10"] / M["m00"])
         dX = x - w/2
-        y = (M["m01"] / M["m00"]) 
+        y = (M["m01"] / M["m00"])
         dY = y - h/2
         dist_rate_from_focal = np.sqrt(dX*dX+dY*dY)/(h/2)
         # if not within focal region, abort
@@ -133,7 +133,7 @@ def extractMaze(frame, cv2_version, FOCAL_DIST_TOL=0.7):
                 cv2.drawContours(frame_cpy, [approx], -1, (0,255,255), 3)
                 debugWindowAppend('approx', frame_cpy)
                 break
-            
+
     #highlight largest contour
     cv2.drawContours(frame_cpy, cnts[0], -1, (0,0,255), 3)
     #draw orientation line
@@ -228,7 +228,7 @@ def mapMaze_Array(frame, feature_coord, feature_mask, grid_size, ENABLE_GRID=Tru
         if len(coord) >= 2:
             uv_coord = [ (math.floor(coord[0] /grid_size)) , (math.floor(coord[1] /grid_size)) ]
         features_uv_coord.update({item:uv_coord})
-        
+
     map_array = []
     for j in range(0, filter_maze_pixel_width, grid_size):
         map_array_1D = []
@@ -307,6 +307,7 @@ def mazeSolver_Phase1(frame, cv2_version, grid_size_percent, gradientFactor):
         start = []
         end = []
         ball = []
+        features_uv = []
         if All_tags_exist:
             maze, features_uv = mapMaze_Array(maze_frame, feature_coord, feature_mask, grid_size)
             if maze is not None:
@@ -319,7 +320,7 @@ def mazeSolver_Phase1(frame, cv2_version, grid_size_percent, gradientFactor):
                 debugWindowAppend('ContourMap', cnt_mp)
     else:
         EPRINT("mazeSolver_Phase1 - UNABLE TO EXTRACT MAZE FRAME")
-        return None, None, None, None, None, None, None, None
+        return None, None, None, None, None, None
     return maze, features_uv, maze_frame, grid_size, maze_contour, tilt_angle
 
 def pathOptimization(path, counter_map):

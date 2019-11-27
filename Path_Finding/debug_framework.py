@@ -12,7 +12,7 @@ def SPRINT(*args):
 def DPRINT(*args):
     if ENABLE_DPRINT:
         print( "[DEBUG] "+" ".join(map(str,args)))
-        
+
 def EPRINT(*args):
     if ENABLE_EPRINT:
         print( "[ERROR] --x "+" ".join(map(str,args)))
@@ -125,7 +125,7 @@ def parseCML(argv):
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            SPRINT('PLEASE USE: main.py -m <mode:calib/static/run> -c <live>')
+            SPRINT('PLEASE USE: main.py -m <mode:calib/static/run/loop> -c <live>')
             sys.exit()
         elif opt in ("-m", "--mode"):
             mode = arg
@@ -137,6 +137,9 @@ def parseCML(argv):
                 camera_live = False
             elif mode == 'run':
                 mode = "TESTING_RUN"
+                camera_live = True
+            elif mode == 'loop':
+                mode = "TESTING_LOOP"
                 camera_live = True
             else:
                 mode = "UNDEFINED"
