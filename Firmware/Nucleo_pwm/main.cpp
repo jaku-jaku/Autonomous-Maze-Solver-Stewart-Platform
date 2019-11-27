@@ -122,7 +122,7 @@ int main() {
       //  COMPASS_MOTION::driveTo(COMPASS_MOTION:: DIRECTION_NULL, m_platform);
       // wait(0.01);
       char direction = pc.getc();
-      int direction_num = direction - 48;
+      int direction_num = direction - 97;
       COMPASS_MOTION::driveTo(direction_num, m_platform);
       wait(0.01);
       pc.putc(direction);
