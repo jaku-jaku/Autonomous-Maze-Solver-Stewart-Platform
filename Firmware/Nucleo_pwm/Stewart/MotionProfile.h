@@ -25,13 +25,15 @@ namespace COMPASS_MOTION{
         TOTAL_NUM_DIRECTIONS
     } direction_E;
 
+    // North - neg, neg, neut, neut, neg, neg
+    // East and west are inverted
     // STEP 2: Enter these based on the offline computation
     Servo::degree_t angles[TOTAL_NUM_DIRECTIONS][MAX_NUM_ACTUATORS] = {
         {0,0,0,0,0,0},// NULL
         {16, -17, 1, 1, -17, 16},// N
         {10, -8, -20, 18, 8, -11},// E
         {-11, 7, 20, -18, -7, 11},// W
-        {-16, 1, -1, -1, 16, -16},// S
+        {-16, 17, -1, -1, 16, -16},// S
         {27, -26, -18, 20, -9, 4},// NE
         {5, -8, 21, -17, -25, 28},// NW - g
         {-4, 9, -22, 17, 26, -28},// SE - h
