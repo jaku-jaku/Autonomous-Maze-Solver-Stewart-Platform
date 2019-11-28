@@ -139,17 +139,7 @@ def extractMaze(frame, cv2_version, FOCAL_DIST_TOL=0.7):
     #draw orientation line
     cnt = cnts[0]
     [vx,vy,x,y] = cv2.fitLine(cnt, cv2.DIST_L2,0,0.01,0.01)
-    val = np.arctan2(vx, vy)*180/np.pi
     DPRINT('--<  Pos  :', x, y)
-    DPRINT('--<  Angle:', val, 'degree')
-    if vx != 0:
-        lefty = int((-x*vy/vx) + y)
-        righty = int(((h-x)*vy/vx)+y)
-        cv2.line(frame_cpy,(h-1,righty),(0,lefty),(0,255,0),2)
-        botty = int(x-(vy/vx)*(w-y))
-        toppy = int(x+(vy/vx)*y)
-        cv2.line(frame_cpy,(botty,w-1),(toppy,0),(0,0,255),2)
-
     # display contour
     showImage("contour", frame_cpy)
 
@@ -157,6 +147,14 @@ def extractMaze(frame, cv2_version, FOCAL_DIST_TOL=0.7):
         try:
             maze_extracted = four_point_transform(frame, displayCnt.reshape(4, 2))
             angle = tiltDetection(displayCnt.reshape(4, 2), 1)
+
+            slope = np.tan(angle/180*np.pi)
+            lefty = int((-x*slope) + y)
+            righty = int(((h-x)*slope)+y)
+            cv2.line(frame_cpy,(h-1,righty),(0,lefty),(0,255,0),2)
+            botty = int(x-(slope)*(w-y))
+            toppy = int(x+(slope)*y)
+            cv2.line(frame_cpy,(botty,w-1),(toppy,0),(0,0,255),2)
         except:
             EPRINT("ERROR TO PERFORM 4 PT TRANSFORM")
             return None, 0
