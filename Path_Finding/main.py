@@ -50,7 +50,7 @@ def main(argv):
                     EPRINT(' Unable to find balls, abort path planning, continue searching ...')
                 else:
                     ball = features_uv['ball']
-                    list_mark_tags = ['blue_mark', 'red_mark']
+                    list_mark_tags = ['blue_mark', 'red_mark', 'green_mark']
                     path_dict = {}
                     clr_i = 0
                     for tag in list_mark_tags:

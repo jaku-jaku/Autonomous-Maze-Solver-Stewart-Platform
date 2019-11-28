@@ -16,14 +16,15 @@ GRID_SIZE_PERCENT = 0.018
 
 
 # Feature
-FEATURE_TARGET =[   {'tag': 'blue_mark', 'lower':[41,0,93], 'upper':[106,255,150], 'minArea':1000, 'maskSize':50},
-                    {'tag': 'red_mark','lower':[2,0,0],  'upper':[14, 255, 255], 'minArea':1000, 'maskSize':60},
-                    {'tag': 'ball', 'lower':[0,0,230], 'upper':[255,255,255], 'minArea':1000, 'maskSize':60},
+FEATURE_TARGET =[   { 'tag': 'blue_mark', 'lower':[41,0,93], 'upper':[106,255,150], 'minArea':1000, 'maskSize':50 },
+                    { 'tag': 'red_mark','lower':[2,0,0],  'upper':[14, 255, 255], 'minArea':1000, 'maskSize':60 },
+                    { 'tag': 'ball', 'lower':[0,0,230], 'upper':[255,255,255], 'minArea':1000, 'maskSize':60 },
+                    { 'tag': 'green_mark', 'lower': [32, 32, 35], 'upper': [73, 160, 161], 'minArea': 1000, 'maskSize': 55 }
                 ]
 
 # INTERFACE Config
-COUNT_DELAY = 0.08 #s
-COUNT_DELAY_REPEAT = 0.015 #0.01 #s
+COUNT_DELAY = 0.1 #s
+COUNT_DELAY_REPEAT = 0.01 #0.01 #s
 
 
 #

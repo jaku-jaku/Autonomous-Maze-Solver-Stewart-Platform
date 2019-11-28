@@ -37,7 +37,7 @@ def send_path(path, tilt_angle):
     pathA = PathA()
     commands = pathA.getCommandMovementsFromPath(path, tilt_angle)
     ser = serial.Serial()
-    ser.port = '/dev/tty.usbmodem143303'
+    ser.port = '/dev/tty.usbmodem142303'
     ser.baudrate = 9600
     ser.open()
     count = COUNT_DELAY
