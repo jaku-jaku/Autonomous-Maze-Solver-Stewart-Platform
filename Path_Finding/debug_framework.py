@@ -117,15 +117,16 @@ def parseCML(argv):
     # default
     mode = "TESTING_LOCAL"
     camera_live = False
+    arg_port = None
     # parsing
     try:
-        opts, args = getopt.getopt(argv,"m:c:",["mode=","camera="])
+        opts, args = getopt.getopt(argv,"m:c:p:",["mode=","camera=","port="])
     except getopt.GetoptError:
-        SPRINT('main.py -m <mode:calib/static/run> -c <live>')
+        SPRINT('main.py -m <mode:calib/static/run> -c <live> -p <port#>')
         sys.exit(2)
     for opt, arg in opts:
         if opt == '-h':
-            SPRINT('PLEASE USE: main.py -m <mode:calib/static/run/loop> -c <live>')
+            SPRINT('PLEASE USE: main.py -m <mode:calib/static/run/loop> -c <live> -p <port#>')
             sys.exit()
         elif opt in ("-m", "--mode"):
             mode = arg
@@ -149,8 +150,10 @@ def parseCML(argv):
             temp = arg
             if arg == 'live':
                 camera_live = True
+        elif opt in ('-p', '--port'):
+            arg_port = arg
 
-    return mode, camera_live
+    return mode, camera_live, arg_port
 
 def init_webCam():
     cam = cv2.VideoCapture(1)
@@ -165,12 +168,22 @@ def grab_webCam_feed(cam, mirror=False):
     return img
 
 fps_timer_dict = {}
-def setFPS_Timer(tag, fps):
-    fps_timer_dict.update({tag:{'fps':fps, 'last_time':time.time()}})
+def setFPS_Timer(tag, fps, timePeriod=None):
+    fps_timer_dict.update({tag:{'fps':fps, 'last_time':time.time(), 'tau':timePeriod}})
 
 def getFPS_Timer(tag):
     if tag in fps_timer_dict:
         if (1/(time.time() - fps_timer_dict[tag]['last_time'])) < fps_timer_dict[tag]['fps']:
+            fps_timer_dict[tag]['last_time'] = time.time()
+            return True
+        else:
+            return False
+    else:
+        return False
+
+def getFPS_Timer_Elapsed_Tau(tag):
+    if tag in fps_timer_dict and fps_timer_dict[tag]['tau'] is not None:
+        if (time.time() - fps_timer_dict[tag]['last_time']) >= fps_timer_dict[tag]['tau']:
             fps_timer_dict[tag]['last_time'] = time.time()
             return True
         else:

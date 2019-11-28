@@ -7,7 +7,7 @@ from config import GRID_SIZE_PERCENT, GRADIENT_FACTOR, ANIMATION_FPS, COLOR_STRI
 # |######################################################|
 # +------------------------------------------------------+
 def main(argv):
-    MODE, CAM_LIVE = parseCML(argv)
+    MODE, CAM_LIVE, ARG_PORT = parseCML(argv)
     CV2_VERSION = cv2.__version__
     SPRINT('CV2 VERSION:' ,CV2_VERSION)
     ##### FOR TESTING RUN_TIME ######
@@ -73,7 +73,7 @@ def main(argv):
                         SPRINT("  > Waiting for 'g' key to cmd, ' ' to abort, 'esc' to quit")
                         for tag in list_mark_tags:
                             temp = maze_frame.copy()
-                            if tag in path_dict and path_dict[tag] is not None:
+                            if tag in path_dict and path_dict[tag]['optimized'] is not None:
                                 temp = paintPath(temp, path_dict[tag]['norm'], grid_size, color=path_dict[tag]['color'][0])
                                 temp  = paintPath(temp, path_dict[tag]['optimized'], grid_size, color=path_dict[tag]['color'][1])
                             debugWindowAppend(('path:'+tag), temp)
@@ -114,7 +114,7 @@ def main(argv):
                             # animation
                             selected_PATH_TAG = list_mark_tags[int(selectionIndex/2)]
                             selected_PATH_CLR = (0,0,0)
-                            if selected_PATH_TAG in path_dict and path_dict[selected_PATH_TAG] is not None:
+                            if selected_PATH_TAG in path_dict and path_dict[selected_PATH_TAG]['optimized'] is not None:
                                 if selectionIndex%2 == 0:
                                     selected_PATH_CLR = path_dict[selected_PATH_TAG]['color'][1]
                                     selected_PATH = path_dict[selected_PATH_TAG]['optimized']
@@ -132,10 +132,14 @@ def main(argv):
                                     if tick_index >= len(selected_PATH):
                                         tick_index = 0
                             else:
-                                EPRINT(' selected target was not recognized, abort --< ', selected_PATH_TAG)
-                                break
+                                EPRINT(' selected target was not recognized, [space] to re-search --< ', selected_PATH_TAG)
+                                selectionIndex += 2 # skip selection
+                                # break
                         if IFRUN:
-                            send_path(selected_PATH, tilt_angle)
+                            if ARG_PORT is None:
+                                send_path(selected_PATH, tilt_angle) # use default
+                            else:
+                                send_path(selected_PATH, tilt_angle, port=ARG_PORT)
 
             key = cv2.waitKey(1)
             if key == ord('s'):

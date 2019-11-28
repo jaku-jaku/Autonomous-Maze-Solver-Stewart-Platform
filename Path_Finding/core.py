@@ -294,30 +294,26 @@ def mazeSolver_Phase1(frame, cv2_version, grid_size_percent, gradientFactor):
         #print(coord)
 
         #create 2D binarized array of maze (1-> path, 0->obstacle)
-        All_tags_exist = True
         for feature in list_of_bounds:
             if feature['tag'] not in feature_coord:
-                All_tags_exist = False
                 EPRINT('UNABLE to find feature::', feature['tag'])
             else:
                 if feature_coord[feature['tag']][2] == -1:
-                    All_tags_exist = False
                     DPRINT('Invalid feature::', feature['tag'], feature_coord[feature['tag']])
         maze = []
         start = []
         end = []
         ball = []
         features_uv = []
-        if All_tags_exist:
-            maze, features_uv = mapMaze_Array(maze_frame, feature_coord, feature_mask, grid_size)
-            if maze is not None:
-                cnt_mp = temp2
-                maze_contour = generateContour(maze, bndry=gradientFactor)
-                highlightMapCells(cnt_mp, maze_contour, grid_size,(125,125,255), mark_val=255)
-                for i in range(1, gradientFactor):
-                    gValue = int(MAX_HEAT_MAP_VALUE/np.power(i, MAX_HEAT_MAP_POWER))
-                    highlightMapCells(cnt_mp, maze_contour, grid_size, hsv2bgr(i/gradientFactor,1,1), mark_val=gValue)
-                debugWindowAppend('ContourMap', cnt_mp)
+        maze, features_uv = mapMaze_Array(maze_frame, feature_coord, feature_mask, grid_size)
+        if maze is not None:
+            cnt_mp = temp2
+            maze_contour = generateContour(maze, bndry=gradientFactor)
+            highlightMapCells(cnt_mp, maze_contour, grid_size,(125,125,255), mark_val=255)
+            for i in range(1, gradientFactor):
+                gValue = int(MAX_HEAT_MAP_VALUE/np.power(i, MAX_HEAT_MAP_POWER))
+                highlightMapCells(cnt_mp, maze_contour, grid_size, hsv2bgr(i/gradientFactor,1,1), mark_val=gValue)
+            debugWindowAppend('ContourMap', cnt_mp)
     else:
         EPRINT("mazeSolver_Phase1 - UNABLE TO EXTRACT MAZE FRAME")
         return None, None, None, None, None, None
