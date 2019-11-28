@@ -82,7 +82,7 @@ def main(argv):
                             debugWindowAppend(('path:'+tag), temp)
 
                         # save the debugwindow as well
-                        save_frame('debugWindow', debugWindowRender(), private_index_list, override=True)
+                        save_frame('debugWindow', debugWindowRender(), private_index_list, override=False)
 
                         # Select path, and wait for sending
                         animation_frame = maze_frame.copy()
