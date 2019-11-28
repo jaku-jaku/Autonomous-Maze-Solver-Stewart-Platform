@@ -47,13 +47,17 @@ class Astar:
         path = []
         cur_node = eNode
         loop = True
-        path.append(cur_node)
-        while loop:
-            cur_node = cur_node.Parent
-            loop = (cur_node.compareTo(sNode) == False)
-            path.insert(0, cur_node)
-
-        return path
+        if cur_node is None or sNode is None:
+            return None
+        else:
+            path.append(cur_node)
+            while loop:
+                cur_node = cur_node.Parent
+                if cur_node is None or sNode is None:
+                    return None
+                loop = (cur_node.compareTo(sNode) == False)
+                path.insert(0, cur_node)
+            return path
 
     def getNeighbours(self, cnode, grid, ALLOW_DIAG):
         neighbours = []

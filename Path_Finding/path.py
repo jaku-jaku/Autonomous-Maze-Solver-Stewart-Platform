@@ -105,7 +105,8 @@ class PathA:
         finder = AStarFinder(diagonal_movement=DiagonalMovement.never)
         path, runs = finder.find_path(start, end, grid)
 
-        print(grid.grid_str(path=path, start=start, end=end))
+        if len(path) >= 1:
+            print(grid.grid_str(path=path, start=start, end=end))
         return path
 
 '''

@@ -50,21 +50,24 @@ def main(argv):
                     EPRINT(' Unable to find balls, abort path planning, continue searching ...')
                 else:
                     ball = features_uv['ball']
-                    list_mark_tags = ['blue_mark', 'red_mark', 'green_mark']
+                    list_mark_tags = ['green_mark', 'blue_mark', 'red_mark']
                     path_dict = {}
                     clr_i = 0
                     for tag in list_mark_tags:
                         if tag in features_uv and features_uv[tag] is not None:
                             path = find_path(maze, ball, features_uv[tag])
                             path_optimized = find_path(maze, ball, features_uv[tag], heat_map=heat_map)
-                            path_dict.update({tag:{'norm':path, 'optimized':path_optimized, 'color':[COLOR_STRIP[clr_i*2], COLOR_STRIP[clr_i*2+1]]}})
-                            DPRINT('--> Path Found for:', tag)
+                            if len(path) == 0 and len(path_optimized) == 0:
+                                EPRINT('--> No Path Found for:', tag)
+                            else:
+                                path_dict.update({tag:{'norm':path, 'optimized':path_optimized, 'color':[COLOR_STRIP[clr_i*2], COLOR_STRIP[clr_i*2+1]]}})
+                                DPRINT('--> Path Found for:', tag)
                         else:
                             EPRINT('--X Unable to find:', tag)
                         clr_i = clr_i+1
 
                     if len(path_dict) == 0:
-                        EPRINT('No Path Found')
+                        EPRINT('No Path Found For any marks')
                         debugWindowRender()
                     else:
                         # save this working frame

@@ -247,9 +247,13 @@ def mapMaze_Array(frame, feature_coord, feature_mask, grid_size, ENABLE_GRID=Tru
     # revive feature coords
     for item in features_uv_coord:
         uv_coord = features_uv_coord[item]
-        map_array[uv_coord[1]][uv_coord[0]] = 1
-        # highlight features
-        highlightMapCellAt(frame, uv_coord, grid_size, random_color())
+        if len(uv_coord) >= 2:
+            i = uv_coord[1]
+            j = uv_coord[0]
+            if i<len(map_array) and j<len(map_array) and i>0 and j>0:
+                map_array[i][j] = 1
+                # highlight features
+                highlightMapCellAt(frame, uv_coord, grid_size, random_color())
 
     # highlight walls (visual)
     highlightMapCells(frame, map_array, grid_size,(0,125,255), mark_val=0)
