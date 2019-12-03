@@ -42,6 +42,16 @@ Autonomous maze solver with Stewart Platform via a single WebCam.
   - ~~A star algorithm (using library)~~
   - Custom A* algorithm (Currently Used), with energy/heat map to make the path more centered and optimized
   - Control Algorithm and integration pipelines to hardware interface
+  
+## System Sketch
+![System Design Sketch](https://github.com/JXproject/Proj__StewartPlatform/blob/demo/nov28/CAD_Render/system_sketch.png)
+
+## Flow Chart of the completed pipeline:
+![Flow Chart](https://github.com/JXproject/Proj__StewartPlatform/blob/demo/nov28/CAD_Render/flow_chart.jpeg)
+
+## Actual Photo of the Platform
+![Stewart Platform P1](https://github.com/JXproject/Proj__StewartPlatform/blob/demo/nov28/CAD_Render/initial_prototype.jpg)
+![Stewart Platform P2](https://github.com/JXproject/Proj__StewartPlatform/blob/demo/nov28/CAD_Render/Final_Platform.jpg)
 
 ## External_API
 -   http://kieranwynn.github.io/pyquaternion/
