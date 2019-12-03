@@ -3,9 +3,9 @@ UW MTE 380 Course Project - 2021 Tron
 **Authors: Jack, Jeremy, Tsugumi, Zong
 
 ## Summary
-Autonomous maze solver with Stewart Platform with a single WebCam.
+Autonomous maze solver with Stewart Platform via a single WebCam.
+**Program Directory: https://github.com/JXproject/Proj__StewartPlatform/tree/demo/nov28/Path_Finding
 
-## Program Directory: https://github.com/JXproject/Proj__StewartPlatform/tree/demo/nov28/Path_Finding
 ## Possible Command line inputs:
 - For local image processing (demo) based on camera feeds from last successful detection
   > python3 main.py -m static 
@@ -28,7 +28,7 @@ Autonomous maze solver with Stewart Platform with a single WebCam.
 ### Hardware List:
 - Servos x6
 - MCU board
-- 
+- WebCam: Logitech C270
 
 ### Repo Contains:
 - Low level C code
