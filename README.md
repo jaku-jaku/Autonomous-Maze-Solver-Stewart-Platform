@@ -1,11 +1,11 @@
 # Proj_StewartPlatform
-UW MTE 380 Course Project - 2021 Tron
-**Authors: Jack, Jeremy, Tsugumi, Zong
+UW MTE 380 Course Project - 2021 Tron 
+**Authors: Jack, Jeremy, Tsugumi, Zong**
 
 ## Summary
 Autonomous maze solver with Stewart Platform via a single WebCam.
 
-**Program Directory: https://github.com/JXproject/Proj__StewartPlatform/tree/demo/nov28/Path_Finding
+**Program Directory: https://github.com/JXproject/Proj__StewartPlatform/tree/demo/nov28/Path_Finding**
 
 ## Possible Command line inputs:
 - For local image processing (demo) based on camera feeds from last successful detection
