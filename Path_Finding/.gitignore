@@ -1,3 +1,3 @@
-img/*
-!img/frame_maze_1.png
+#img/*
+#!img/frame_maze_1.png
 __pycache__/*

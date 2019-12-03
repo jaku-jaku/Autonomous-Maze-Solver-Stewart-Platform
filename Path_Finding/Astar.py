@@ -47,14 +47,18 @@ class Astar:
         path = []
         cur_node = eNode
         loop = True
-        path.append(cur_node)
-        while loop:
-            cur_node = cur_node.Parent
-            loop = (cur_node.compareTo(sNode) == False)
-            path.insert(0, cur_node)
+        if cur_node is None or sNode is None:
+            return None
+        else:
+            path.append(cur_node)
+            while loop:
+                cur_node = cur_node.Parent
+                if cur_node is None or sNode is None:
+                    return None
+                loop = (cur_node.compareTo(sNode) == False)
+                path.insert(0, cur_node)
+            return path
 
-        return path
-        
     def getNeighbours(self, cnode, grid, ALLOW_DIAG):
         neighbours = []
         for i in range(cnode.y-1, cnode.y+2):
@@ -65,21 +69,21 @@ class Astar:
                 if (i>= 0 and i<len(grid) and j>=0 and j<len(grid[0]) and grid[i][j].walkable):
                     neighbours.append(grid[i][j].copy()) # make a copy
         return neighbours
-        
+
     def getPathDistance(self, path):
         return path[len(path)-1].fCost
 
     def findPath(self, world, sNode, eNode, ALLOW_DIAG=True):
         openSet = []
         closeSet = []
-        
+
         if sNode.walkable:
             sNode.gCost = 0
             sNode.hCost = self.getHDistance(sNode, eNode, APPLY_HEAT=False)
             sNode.fCost = sNode.hCost
-        
+
             openSet.append(sNode)
-            
+
             # self.printRow(openSet, 'index', 'Openset:')
 
             while(len(openSet)>0):
@@ -87,7 +91,7 @@ class Astar:
                 for it in openSet:
                     if it.fCost < sIt.fCost or (it.fCost == sIt.fCost and it.hCost <= sIt.hCost):
                         sIt = it
-                        
+
                 closeSet.append(sIt)
                 openSet.remove(sIt)
                 # self.printRow(openSet, 'index', 'Openset:')
@@ -121,14 +125,18 @@ class Astar:
 
                 if sIt.compareTo(eNode):
                     return self.retracePath(sNode, sIt)
-    
+
         return None;
 
     def extractPath(self, Astar_Path):
         path = []
-        for node in Astar_Path:
-            path.append((node.x, node.y))
-        return path
+        if Astar_Path is None:
+            print('UNABLE to extract path')
+            return None
+        else:
+            for node in Astar_Path:
+                path.append((node.x, node.y))
+            return path
 
     def printRow(self, list, tag, title=None):
         row = []
@@ -142,35 +150,38 @@ class Astar:
     def printAll2D(self, objs, tag):
         for row in objs:
             self.printRow(row, tag)
-    
+
     def printMaze(self, objs, path):
-        print("------ CUSTOM ASTAR ------")
-        j = 0
-        for row in objs:
-            row_txt = '|'
-            i = 0
-            for item in row:
-                if item.get('walkable'):
-                    markAsPath = False
-                    for x,y in path:
-                        if x == i and y == j:
-                            markAsPath = True
-                            break
-                    if item.get('tag') == 'START':
-                        row_txt = row_txt+'S'
-                    elif item.get('tag') == 'END':
-                        row_txt = row_txt+'E'
-                    elif markAsPath:
-                        row_txt = row_txt+'X'
+        if path is None:
+            print('No maze to print')
+        else:
+            print("------ CUSTOM ASTAR ------")
+            j = 0
+            for row in objs:
+                row_txt = '|'
+                i = 0
+                for item in row:
+                    if item.get('walkable'):
+                        markAsPath = False
+                        for x,y in path:
+                            if x == i and y == j:
+                                markAsPath = True
+                                break
+                        if item.get('tag') == 'START':
+                            row_txt = row_txt+'S'
+                        elif item.get('tag') == 'END':
+                            row_txt = row_txt+'E'
+                        elif markAsPath:
+                            row_txt = row_txt+'X'
+                        else:
+                            row_txt = row_txt+' '
                     else:
-                        row_txt = row_txt+' '
-                else:
-                    row_txt = row_txt+'#'
-                i = i+1
-            j = j+1
-            row_txt = row_txt + '|'
-            print(row_txt)
-        print("------ CUSTOM ASTAR ------")
+                        row_txt = row_txt+'#'
+                    i = i+1
+                j = j+1
+                row_txt = row_txt + '|'
+                print(row_txt)
+            print("------ CUSTOM ASTAR ------")
 
     def genMap(self, mapInput, sPos, ePos, PATH_VALUE = 0, heat_map = None):
         grid = []
@@ -183,7 +194,7 @@ class Astar:
                     newnode = Node(x, y, (mapInput[y][x] == PATH_VALUE))
                 row.append(newnode)
             grid.append(row)
-        
+
         sNode = grid[sPos[1]][sPos[0]]
         eNode = grid[ePos[1]][ePos[0]]
         sNode.tag = "START"

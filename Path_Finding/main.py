@@ -7,7 +7,7 @@ from config import GRID_SIZE_PERCENT, GRADIENT_FACTOR, ANIMATION_FPS, COLOR_STRI
 # |######################################################|
 # +------------------------------------------------------+
 def main(argv):
-    MODE, CAM_LIVE = parseCML(argv)
+    MODE, CAM_LIVE, ARG_PORT = parseCML(argv)
     CV2_VERSION = cv2.__version__
     SPRINT('CV2 VERSION:' ,CV2_VERSION)
     ##### FOR TESTING RUN_TIME ######
@@ -22,7 +22,7 @@ def main(argv):
         frame = grab_webCam_feed(cam, mirror=False)
         save_frame('begin', frame, private_index_list, override=True)
 
-    if "TESTING_RUN" == MODE or "TESTING_LOCAL" == MODE:
+    if "TESTING_RUN" == MODE or "TESTING_LOCAL" == MODE or "TESTING_LOOP" == MODE:
         TERMINATE = False
         while TERMINATE == False:
             if CAM_LIVE: #live feed
@@ -37,7 +37,8 @@ def main(argv):
                     EPRINT('FAIL to read')
             # extract maze bndry
             maze, features_uv, maze_frame, grid_size, heat_map, tilt_angle = mazeSolver_Phase1(frame, CV2_VERSION, GRID_SIZE_PERCENT, GRADIENT_FACTOR)
-            tilt_angle = float(tilt_angle)
+            if tilt_angle !=  None :
+                tilt_angle = float(tilt_angle)
             if maze is None:
                 EPRINT('UNABLE to recognize Maze')
             elif len(maze) == 0:
@@ -49,21 +50,24 @@ def main(argv):
                     EPRINT(' Unable to find balls, abort path planning, continue searching ...')
                 else:
                     ball = features_uv['ball']
-                    list_mark_tags = ['blue_mark', 'red_mark']
+                    list_mark_tags = ['green_mark', 'blue_mark', 'red_mark']
                     path_dict = {}
                     clr_i = 0
                     for tag in list_mark_tags:
-                        if tag in features_uv and features_uv[tag] is not None:    
+                        if tag in features_uv and features_uv[tag] is not None:
                             path = find_path(maze, ball, features_uv[tag])
                             path_optimized = find_path(maze, ball, features_uv[tag], heat_map=heat_map)
-                            path_dict.update({tag:{'norm':path, 'optimized':path_optimized, 'color':[COLOR_STRIP[clr_i*2], COLOR_STRIP[clr_i*2+1]]}})
-                            DPRINT('--> Path Found for:', tag)
+                            if len(path) == 0 and len(path_optimized) == 0:
+                                EPRINT('--> No Path Found for:', tag)
+                            else:
+                                path_dict.update({tag:{'norm':path, 'optimized':path_optimized, 'color':[COLOR_STRIP[clr_i*2], COLOR_STRIP[clr_i*2+1]]}})
+                                DPRINT('--> Path Found for:', tag)
                         else:
                             EPRINT('--X Unable to find:', tag)
                         clr_i = clr_i+1
 
                     if len(path_dict) == 0:
-                        EPRINT('No Path Found')
+                        EPRINT('No Path Found For any marks')
                         debugWindowRender()
                     else:
                         # save this working frame
@@ -72,13 +76,13 @@ def main(argv):
                         SPRINT("  > Waiting for 'g' key to cmd, ' ' to abort, 'esc' to quit")
                         for tag in list_mark_tags:
                             temp = maze_frame.copy()
-                            if tag in path_dict and path_dict[tag] is not None:
+                            if tag in path_dict and path_dict[tag]['optimized'] is not None:
                                 temp = paintPath(temp, path_dict[tag]['norm'], grid_size, color=path_dict[tag]['color'][0])
                                 temp  = paintPath(temp, path_dict[tag]['optimized'], grid_size, color=path_dict[tag]['color'][1])
                             debugWindowAppend(('path:'+tag), temp)
-                        
+
                         # save the debugwindow as well
-                        save_frame('debugWindow', debugWindowRender(), private_index_list, override=True)
+                        save_frame('debugWindow', debugWindowRender(), private_index_list, override=False)
 
                         # Select path, and wait for sending
                         animation_frame = maze_frame.copy()
@@ -86,6 +90,7 @@ def main(argv):
                         IFRUN = False
                         selectionIndex = 0
                         tick_index = 0
+                        DPRINT("Below is the path dictionary", path_dict)
                         while True:
                             key = cv2.waitKey(1)
                             if key ==  ord('g'):
@@ -96,12 +101,12 @@ def main(argv):
                                 selectionIndex = selectionIndex-1
                                 if selectionIndex < 0:
                                     selectionIndex = len(list_mark_tags)*2-1
-                                tick_index = 0 
+                                tick_index = 0
                             elif key == ord('h'): #->
                                 selectionIndex = selectionIndex+1
                                 if selectionIndex >= len(list_mark_tags)*2:
                                     selectionIndex = 0
-                                tick_index = 0 
+                                tick_index = 0
                             elif key ==  ord(' '): # esc to quit
                                 SPRINT("--> abort current path, rerun")
                                 break
@@ -112,7 +117,7 @@ def main(argv):
                             # animation
                             selected_PATH_TAG = list_mark_tags[int(selectionIndex/2)]
                             selected_PATH_CLR = (0,0,0)
-                            if selected_PATH_TAG in path_dict and path_dict[selected_PATH_TAG] is not None:
+                            if selected_PATH_TAG in path_dict and path_dict[selected_PATH_TAG]['optimized'] is not None:
                                 if selectionIndex%2 == 0:
                                     selected_PATH_CLR = path_dict[selected_PATH_TAG]['color'][1]
                                     selected_PATH = path_dict[selected_PATH_TAG]['optimized']
@@ -130,10 +135,14 @@ def main(argv):
                                     if tick_index >= len(selected_PATH):
                                         tick_index = 0
                             else:
-                                EPRINT(' selected target was not recognized, abort --< ', selected_PATH_TAG)
-                                break
+                                EPRINT(' selected target was not recognized, [space] to re-search --< ', selected_PATH_TAG)
+                                selectionIndex += 2 # skip selection
+                                # break
                         if IFRUN:
-                            send_path(selected_PATH, tilt_angle)
+                            if ARG_PORT is None:
+                                send_path(selected_PATH, tilt_angle) # use default
+                            else:
+                                send_path(selected_PATH, tilt_angle, port=ARG_PORT)
 
             key = cv2.waitKey(1)
             if key == ord('s'):

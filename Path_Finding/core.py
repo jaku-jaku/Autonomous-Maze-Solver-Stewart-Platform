@@ -120,7 +120,7 @@ def extractMaze(frame, cv2_version, FOCAL_DIST_TOL=0.7):
         M = cv2.moments(c)
         x = (M["m10"] / M["m00"])
         dX = x - w/2
-        y = (M["m01"] / M["m00"]) 
+        y = (M["m01"] / M["m00"])
         dY = y - h/2
         dist_rate_from_focal = np.sqrt(dX*dX+dY*dY)/(h/2)
         # if not within focal region, abort
@@ -133,23 +133,13 @@ def extractMaze(frame, cv2_version, FOCAL_DIST_TOL=0.7):
                 cv2.drawContours(frame_cpy, [approx], -1, (0,255,255), 3)
                 debugWindowAppend('approx', frame_cpy)
                 break
-            
+
     #highlight largest contour
     cv2.drawContours(frame_cpy, cnts[0], -1, (0,0,255), 3)
     #draw orientation line
     cnt = cnts[0]
     [vx,vy,x,y] = cv2.fitLine(cnt, cv2.DIST_L2,0,0.01,0.01)
-    val = np.arctan2(vx, vy)*180/np.pi
     DPRINT('--<  Pos  :', x, y)
-    DPRINT('--<  Angle:', val, 'degree')
-    if vx != 0:
-        lefty = int((-x*vy/vx) + y)
-        righty = int(((h-x)*vy/vx)+y)
-        cv2.line(frame_cpy,(h-1,righty),(0,lefty),(0,255,0),2)
-        botty = int(x-(vy/vx)*(w-y))
-        toppy = int(x+(vy/vx)*y)
-        cv2.line(frame_cpy,(botty,w-1),(toppy,0),(0,0,255),2)
-
     # display contour
     showImage("contour", frame_cpy)
 
@@ -157,6 +147,14 @@ def extractMaze(frame, cv2_version, FOCAL_DIST_TOL=0.7):
         try:
             maze_extracted = four_point_transform(frame, displayCnt.reshape(4, 2))
             angle = tiltDetection(displayCnt.reshape(4, 2), 1)
+
+            slope = np.tan(angle/180*np.pi)
+            lefty = int((-x*slope) + y)
+            righty = int(((h-x)*slope)+y)
+            cv2.line(frame_cpy,(h-1,righty),(0,lefty),(0,255,0),2)
+            botty = int(x-(slope)*(w-y))
+            toppy = int(x+(slope)*y)
+            cv2.line(frame_cpy,(botty,w-1),(toppy,0),(0,0,255),2)
         except:
             EPRINT("ERROR TO PERFORM 4 PT TRANSFORM")
             return None, 0
@@ -228,7 +226,7 @@ def mapMaze_Array(frame, feature_coord, feature_mask, grid_size, ENABLE_GRID=Tru
         if len(coord) >= 2:
             uv_coord = [ (math.floor(coord[0] /grid_size)) , (math.floor(coord[1] /grid_size)) ]
         features_uv_coord.update({item:uv_coord})
-        
+
     map_array = []
     for j in range(0, filter_maze_pixel_width, grid_size):
         map_array_1D = []
@@ -247,9 +245,13 @@ def mapMaze_Array(frame, feature_coord, feature_mask, grid_size, ENABLE_GRID=Tru
     # revive feature coords
     for item in features_uv_coord:
         uv_coord = features_uv_coord[item]
-        map_array[uv_coord[1]][uv_coord[0]] = 1
-        # highlight features
-        highlightMapCellAt(frame, uv_coord, grid_size, random_color())
+        if len(uv_coord) >= 2:
+            i = uv_coord[1]
+            j = uv_coord[0]
+            if i<len(map_array) and j<len(map_array) and i>0 and j>0:
+                map_array[i][j] = 1
+                # highlight features
+                highlightMapCellAt(frame, uv_coord, grid_size, random_color())
 
     # highlight walls (visual)
     highlightMapCells(frame, map_array, grid_size,(0,125,255), mark_val=0)
@@ -294,32 +296,29 @@ def mazeSolver_Phase1(frame, cv2_version, grid_size_percent, gradientFactor):
         #print(coord)
 
         #create 2D binarized array of maze (1-> path, 0->obstacle)
-        All_tags_exist = True
         for feature in list_of_bounds:
             if feature['tag'] not in feature_coord:
-                All_tags_exist = False
                 EPRINT('UNABLE to find feature::', feature['tag'])
             else:
                 if feature_coord[feature['tag']][2] == -1:
-                    All_tags_exist = False
                     DPRINT('Invalid feature::', feature['tag'], feature_coord[feature['tag']])
         maze = []
         start = []
         end = []
         ball = []
-        if All_tags_exist:
-            maze, features_uv = mapMaze_Array(maze_frame, feature_coord, feature_mask, grid_size)
-            if maze is not None:
-                cnt_mp = temp2
-                maze_contour = generateContour(maze, bndry=gradientFactor)
-                highlightMapCells(cnt_mp, maze_contour, grid_size,(125,125,255), mark_val=255)
-                for i in range(1, gradientFactor):
-                    gValue = int(MAX_HEAT_MAP_VALUE/np.power(i, MAX_HEAT_MAP_POWER))
-                    highlightMapCells(cnt_mp, maze_contour, grid_size, hsv2bgr(i/gradientFactor,1,1), mark_val=gValue)
-                debugWindowAppend('ContourMap', cnt_mp)
+        features_uv = []
+        maze, features_uv = mapMaze_Array(maze_frame, feature_coord, feature_mask, grid_size)
+        if maze is not None:
+            cnt_mp = temp2
+            maze_contour = generateContour(maze, bndry=gradientFactor)
+            highlightMapCells(cnt_mp, maze_contour, grid_size,(125,125,255), mark_val=255)
+            for i in range(1, gradientFactor):
+                gValue = int(MAX_HEAT_MAP_VALUE/np.power(i, MAX_HEAT_MAP_POWER))
+                highlightMapCells(cnt_mp, maze_contour, grid_size, hsv2bgr(i/gradientFactor,1,1), mark_val=gValue)
+            debugWindowAppend('ContourMap', cnt_mp)
     else:
         EPRINT("mazeSolver_Phase1 - UNABLE TO EXTRACT MAZE FRAME")
-        return None, None, None, None, None, None, None, None
+        return None, None, None, None, None, None
     return maze, features_uv, maze_frame, grid_size, maze_contour, tilt_angle
 
 def pathOptimization(path, counter_map):
