@@ -4,6 +4,7 @@ UW MTE 380 Course Project - 2021 Tron
 
 ## Summary
 Autonomous maze solver with Stewart Platform via a single WebCam.
+
 **Program Directory: https://github.com/JXproject/Proj__StewartPlatform/tree/demo/nov28/Path_Finding
 
 ## Possible Command line inputs:
