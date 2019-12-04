@@ -22,8 +22,8 @@ Autonomous maze solver with Stewart Platform via a single WebCam.
 ![Software Demo](../Path_Finding/img/frame_debugWindow_1.png)
 
 ## CAD Renders:
-![Stewart Platform CAD Render 1](../CAD_Render/render2.png)
-![Stewart Platform CAD Render 2](../CAD_Render/render3.png)
+![Stewart Platform CAD Render 1](./CAD_Render/render2.png)
+![Stewart Platform CAD Render 2](CAD_Render/render3.png)
 
 ## List of Items
 ### Hardware List:
