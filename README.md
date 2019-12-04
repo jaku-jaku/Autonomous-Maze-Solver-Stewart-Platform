@@ -5,7 +5,7 @@ UW MTE 380 Course Project - 2021 Tron
 ## Summary
 Autonomous maze solver with Stewart Platform via a single WebCam.
 
-**Program Directory: ../Path_Finding**
+**Program Directory: ./Path_Finding**
 
 ## Possible Command line inputs:
 - For local image processing (demo) based on camera feeds from last successful detection
@@ -19,11 +19,11 @@ Autonomous maze solver with Stewart Platform via a single WebCam.
   > python3 main.py -m run -p /dev/tty.usbmodem146300
   
 ## CV Outputs:
-![Software Demo](../Path_Finding/img/frame_debugWindow_1.png)
+![Software Demo](./Path_Finding/img/frame_debugWindow_1.png)
 
 ## CAD Renders:
 ![Stewart Platform CAD Render 1](./CAD_Render/render2.png)
-![Stewart Platform CAD Render 2](CAD_Render/render3.png)
+![Stewart Platform CAD Render 2](./CAD_Render/render3.png)
 
 ## List of Items
 ### Hardware List:
@@ -44,14 +44,14 @@ Autonomous maze solver with Stewart Platform via a single WebCam.
   - Control Algorithm and integration pipelines to hardware interface
   
 ## System Sketch
-![System Design Sketch](../CAD_Render/system_sketch.png)
+![System Design Sketch](./CAD_Render/system_sketch.png)
 
 ## Flow Chart of the completed pipeline:
-![Flow Chart](../CAD_Render/flow_chart.jpeg)
+![Flow Chart](./CAD_Render/flow_chart.jpeg)
 
 ## Actual Photo of the Platform
-![Stewart Platform P1](../CAD_Render/initial_prototype.jpg)
-![Stewart Platform P2](../CAD_Render/Final_Platform.jpg)
+![Stewart Platform P1](./CAD_Render/initial_prototype.jpg)
+![Stewart Platform P2](./CAD_Render/Final_Platform.jpg)
 
 ## External_API
 -   http://kieranwynn.github.io/pyquaternion/
