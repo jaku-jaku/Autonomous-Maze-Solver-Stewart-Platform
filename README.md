@@ -2,6 +2,8 @@
 UW MTE 380 Course Project - 2021 Tron 
 **Authors: Jack, Jeremy, Tsugumi, Zong**
 
+![IMG_4010_0003](README.assets/IMG_4010_0003.gif)
+
 ## Summary
 Autonomous maze solver with Stewart Platform via a single WebCam.
 
@@ -19,11 +21,16 @@ Autonomous maze solver with Stewart Platform via a single WebCam.
   > python3 main.py -m run -p /dev/tty.usbmodem146300
   
 ## CV Outputs:
-![Software Demo](./Path_Finding/img/frame_debugWindow_1.png)
+
+| ![Software Demo](./Path_Finding/img/frame_debugWindow_1.png) |
+| ------------------------------------------------------------ |
+| ![Software Demo](./Path_Finding/img/frame_debugWindow_3.png) |
+
+
 
 ## CAD Renders:
-![Stewart Platform CAD Render 1](./CAD_Render/render2.png)
-![Stewart Platform CAD Render 2](./CAD_Render/render3.png)
+| ![Stewart Platform CAD Render 1](./CAD_Render/render2.png) | ![Stewart Platform CAD Render 2](./CAD_Render/render3.png) |
+| ---------------------------------------------------------- | ---------------------------------------------------------- |
 
 ## List of Items
 ### Hardware List:
@@ -55,5 +62,4 @@ Autonomous maze solver with Stewart Platform via a single WebCam.
 
 ## External_API
 -   http://kieranwynn.github.io/pyquaternion/
-
 
